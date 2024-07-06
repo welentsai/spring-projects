@@ -10,8 +10,4 @@ public record City (String name, Population population)
         Objects.requireNonNull(name);
         Objects.requireNonNull(population);
     }
-//    @Override
-//    public String toString() {
-//        return this.name;
-//    }
 }
