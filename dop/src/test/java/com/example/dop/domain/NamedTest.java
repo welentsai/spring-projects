@@ -26,11 +26,7 @@ public class NamedTest {
     public void testNamedCompare() {
         City qudon = new City("Qudon", new Population(20));
 
-        List<Named> nameds =
-                List.of(
-                        new Department("Moselle", List.of(qudon)),
-                        qudon,
-                        new Department("Herrault", List.of(qudon)));
+        List<Named> nameds = List.of(new Department("Moselle", List.of(qudon)), qudon, new Department("Herrault", List.of(qudon)));
 
         Assertions.assertEquals("Herrault", BusinessCode.min(nameds).toString());
     }
