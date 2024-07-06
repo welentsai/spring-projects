@@ -1,7 +1,7 @@
 package com.example.dop.controller;
 
 import com.example.dop.model.CityEntity;
-import com.example.dop.service.CityService;
+import com.example.dop.service.CityServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -24,7 +24,7 @@ public class CityEntityControllerTest {
     private MockMvc mockMvc;
 
     @MockBean
-    private CityService cityService;
+    private CityServiceImpl cityService;
 
     @Test
     void getAllCities() throws Exception {

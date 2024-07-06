@@ -17,12 +17,12 @@ public class CityServiceTest {
     @Mock
     private CityRepository cityRepository;
 
-    private CityService cityService;
+    private CityServiceImpl cityService;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        cityService = new CityService(cityRepository);
+        cityService = new CityServiceImpl(cityRepository);
     }
 
     @Test
