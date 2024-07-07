@@ -16,7 +16,7 @@ const AppLayout: React.FC = () => {
                 <Sider width={200} className="bg-white">
                     <Sidebar />
                 </Sider>
-                <AntContent className="p-6">
+                <AntContent className="p-6 h-[calc(100vh-64px)]">
                     <Routes>
                         <Route path="/" element={<Home />} />
                         <Route path="/profile" element={<Profile />} />

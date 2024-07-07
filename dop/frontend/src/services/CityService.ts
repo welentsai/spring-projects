@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = '/api'; // Replace with your actual API base URL
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 export interface City {
     id: number;
