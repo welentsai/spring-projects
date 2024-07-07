@@ -16,4 +16,15 @@ public class CityServiceImpl implements CityService {
     public List<CityEntity> getAllCities() {
         return cityRepository.findAll();
     }
+
+    @Override
+    public CityEntity getCityById(String id) {
+        return cityRepository.findById(id)
+                .orElseThrow();
+    }
+
+    @Override
+    public CityEntity addCity(CityEntity cityEntity) {
+        return cityRepository.save(cityEntity);
+    }
 }
