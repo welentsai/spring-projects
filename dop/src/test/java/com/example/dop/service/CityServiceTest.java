@@ -1,7 +1,7 @@
 package com.example.dop.service;
 
 import com.example.dop.model.CityEntity;
-import com.example.dop.repository.CityRepository;
+import com.example.dop.repository.CityEntityRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,7 +15,7 @@ import static org.mockito.Mockito.*;
 public class CityServiceTest {
 
     @Mock
-    private CityRepository cityRepository;
+    private CityEntityRepository cityRepository;
 
     private CityServiceImpl cityService;
 
@@ -30,10 +30,10 @@ public class CityServiceTest {
         CityEntity newYork = new CityEntity("New York", "New York");
         CityEntity london = new CityEntity("London", "London");
         var expectedCities = List.of(newYork, london);
-        when(cityRepository.findAll()).thenReturn(expectedCities);
+        when(cityRepository.getAllCities()).thenReturn(expectedCities);
 
         List<CityEntity> actualCities = cityService.getAllCities();
         Assertions.assertEquals(expectedCities, actualCities);
-        verify(cityRepository, times(1)).findAll();
+        verify(cityRepository, times(1)).getAllCities();
     }
 }

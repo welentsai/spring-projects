@@ -1,30 +1,30 @@
 package com.example.dop.service;
 
 import com.example.dop.model.CityEntity;
-import com.example.dop.repository.CityRepository;
+import com.example.dop.repository.CityEntityRepository;
 
 import java.util.List;
 
 public class CityServiceImpl implements CityService {
-    private final CityRepository cityRepository;
+//    private final CityRepository cityRepository;
+    private final CityEntityRepository cityRepository;
 
-    public CityServiceImpl(CityRepository cityRepository) {
+    public CityServiceImpl(CityEntityRepository cityRepository) {
         this.cityRepository = cityRepository;
     }
 
     @Override
     public List<CityEntity> getAllCities() {
-        return cityRepository.findAll();
+        return cityRepository.getAllCities();
     }
 
     @Override
     public CityEntity getCityById(String id) {
-        return cityRepository.findById(id)
-                .orElseThrow();
+        return cityRepository.getCityById(id);
     }
 
     @Override
     public CityEntity addCity(CityEntity cityEntity) {
-        return cityRepository.save(cityEntity);
+        return cityRepository.addCity(cityEntity);
     }
 }

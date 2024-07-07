@@ -3,8 +3,10 @@ package com.example.dop.controller;
 import com.example.dop.model.CityEntity;
 import com.example.dop.service.CityService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
@@ -29,8 +31,15 @@ public class CityController {
 
     @GetMapping("/{id}")
     public ResponseEntity<CityEntity> getCityById(@PathVariable String id) {
-        CityEntity city = cityService.getCityById(id);
-        return ResponseEntity.ok(city);
+
+        try {
+            CityEntity city = cityService.getCityById(id);
+            return ResponseEntity.ok(city);
+        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+
     }
 
     @PostMapping

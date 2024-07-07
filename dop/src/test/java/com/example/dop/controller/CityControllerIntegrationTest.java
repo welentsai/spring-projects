@@ -2,7 +2,7 @@ package com.example.dop.controller;
 
 import com.example.dop.AbstractContainerBase;
 import com.example.dop.model.CityEntity;
-import com.example.dop.repository.CityRepository;
+import com.example.dop.repository.CityEntityRepository;
 import com.example.dop.util.JsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.jupiter.api.AfterEach;
@@ -28,7 +28,7 @@ public class CityControllerIntegrationTest extends AbstractContainerBase {
     private TestRestTemplate restTemplate;
 
     @Autowired
-    private CityRepository cityRepository;
+    private CityEntityRepository cityRepository;
 
     @BeforeEach
     void setUp() {
@@ -43,14 +43,14 @@ public class CityControllerIntegrationTest extends AbstractContainerBase {
     @Test
     void testGetCity() throws JsonProcessingException {
         CityEntity newYork = new CityEntity("New York", "New York");
-        var result = cityRepository.save(newYork);
+        var result = cityRepository.addCity(newYork);
 
         ResponseEntity<List<CityEntity>> response = restTemplate.exchange(
                 "/api/v1/cities",
                 HttpMethod.GET,
                 null,
                 new ParameterizedTypeReference<>() {
-        });
+                });
 
         Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assertions.assertNotNull(response.getBody());
