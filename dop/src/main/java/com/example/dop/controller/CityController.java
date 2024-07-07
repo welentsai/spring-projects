@@ -23,7 +23,8 @@ public class CityController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CityEntity>> getAllCities() {
+    public ResponseEntity<List<CityEntity>> getAllCities() throws InterruptedException {
+        Thread.sleep(1000);
         List<CityEntity> cities = cityService.getAllCities();
 
         return ResponseEntity.ok(cities);

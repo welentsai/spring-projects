@@ -5,6 +5,7 @@ import Sidebar from './Sidebar';
 import Home from '../pages/Home';
 import Profile from '../pages/Profile';
 import Settings from '../pages/Settings';
+import CityList from './CityList';
 
 const { Sider, Content: AntContent } = Layout;
 
@@ -20,6 +21,7 @@ const AppLayout: React.FC = () => {
                         <Route path="/" element={<Home />} />
                         <Route path="/profile" element={<Profile />} />
                         <Route path="/settings" element={<Settings />} />
+                        <Route path="/cities" element={<CityList />} />
                     </Routes>
                 </AntContent>
             </Layout>
