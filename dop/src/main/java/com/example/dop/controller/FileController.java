@@ -1,7 +1,9 @@
 package com.example.dop.controller;
 
+import com.example.dop.domain.File;
 import com.example.dop.model.FileMetaData;
 import com.example.dop.repository.FileMetaDataRepository;
+import com.example.dop.service.FileService;
 import com.example.dop.service.MinioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -14,12 +16,12 @@ import java.util.List;
 @RestController
 @RequestMapping("api/v1/files")
 public class FileController {
-    private final MinioService minioService;
+    private final FileService fileService;
     private final FileMetaDataRepository fileMetaDataRepository;
 
     @Autowired
-    public FileController(MinioService minioService, FileMetaDataRepository fileMetaDataRepository) {
-        this.minioService = minioService;
+    public FileController(FileService fileService, FileMetaDataRepository fileMetaDataRepository) {
+        this.fileService = fileService;
         this.fileMetaDataRepository = fileMetaDataRepository;
     }
 
@@ -31,15 +33,13 @@ public class FileController {
     }
 
     @PostMapping("/upload")
-    public ResponseEntity<FileMetaData> uploadFile(@RequestParam("file") MultipartFile file, @RequestParam("type") String type) throws Exception {
-        String objectName = minioService.uploadFile(file);
+    public ResponseEntity<String> uploadFile(@RequestParam("file") MultipartFile file, @RequestParam("type") String type) throws Exception {
 
-        FileMetaData metadata = new FileMetaData();
-        metadata.setType(type);
-        metadata.setFileName(file.getOriginalFilename());
-        metadata.setMinioObjectName(objectName);
-        var result = fileMetaDataRepository.save(metadata);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(result);
+
+//        File newFile = File.of(file);
+        File newFile = fileService.uploadFile(file);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(newFile.toString());
     }
 }

@@ -1,6 +1,6 @@
 package com.example.dop.domain;
 
-import com.example.dop.domain.business.BusinessCode;
+import com.example.dop.domain.service.BusinessCode;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

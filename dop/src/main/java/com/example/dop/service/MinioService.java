@@ -31,6 +31,8 @@ public class MinioService {
                         .build()
         );
 
+        inputStream.close();
+
         return fileName;
     }
 }

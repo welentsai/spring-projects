@@ -1,4 +1,4 @@
-package com.example.dop.domain.business;
+package com.example.dop.domain.service;
 
 import com.example.dop.domain.*;
 
