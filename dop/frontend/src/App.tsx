@@ -2,6 +2,8 @@ import * as React from 'react';
 import axios from 'axios';
 import './App.css'
 import AppLayout from './components/AppLayout';
+import { ThemeContext, useTheme } from './contexts/ThemeContext';
+import { theme } from 'antd';
 
 type Story = {
   objectID: string;
@@ -103,6 +105,8 @@ const API_ENDPOINT = 'https://hn.algolia.com/api/v1/search?query=';
 
 const App: React.FC = () => {
 
+  const [theme, setTheme] = React.useState<string>("green");
+
   // React custom hooks
   const [searchTerm, setSearchTerm] = useStorageState('search', 'React');
 
@@ -158,34 +162,36 @@ const App: React.FC = () => {
     event.preventDefault();
   }
 
-
   return (
-    <div>
-      <h1>My Hacker Stories</h1>
+    <ThemeContext.Provider value={{ theme, setTheme }}>
+      <div>
+        <h1>My Hacker Stories</h1>
 
-      <SearchForm
-        searchTerm={searchTerm}
-        handleSearchInput={handleSearchInput}
-        handleSearchSubmit={handleSearchSubmit}
-      />
+        <SearchForm
+          searchTerm={searchTerm}
+          handleSearchInput={handleSearchInput}
+          handleSearchSubmit={handleSearchSubmit}
+        />
 
-      <hr />
+        <hr />
 
-      {stories.isError && <p>Something went wrong ...</p>}
+        {stories.isError && <p>Something went wrong ...</p>}
 
-      {stories.isLoading ? (
-        <p>Loading ...</p>
-      ) : (
-        <List
-          list={stories.data}
-          onRemoveItem={handleRemoveStory} />
-      )}
+        {stories.isLoading ? (
+          <p>Loading ...</p>
+        ) : (
+          <List
+            list={stories.data}
+            onRemoveItem={handleRemoveStory} />
+        )}
 
-      <hr />
-      <p>{Math.random() * 100}</p>
-    </div>
+        <hr />
+        <p>{Math.random() * 100}</p>
+      </div>
+    </ThemeContext.Provider>
   );
   // return <AppLayout />;
+
 };
 
 type SearchFormProps = {
@@ -197,19 +203,23 @@ type SearchFormProps = {
 const SearchForm = ({
   searchTerm,
   handleSearchSubmit,
-  handleSearchInput }: SearchFormProps) => (
-  <form onSubmit={handleSearchSubmit}>
-    <InputWithLabel
-      id='search'
-      value={searchTerm}
-      isFocused
-      onInputChange={handleSearchInput}
-    >
-      <strong>Search: </strong>
-    </InputWithLabel>
-    <button type='submit' disabled={!searchTerm}>Submit</button>
-  </form>
-);
+  handleSearchInput }: SearchFormProps) => {
+  const { value, onChange } = useTheme();
+
+  return (
+    <form onSubmit={handleSearchSubmit}>
+      <InputWithLabel
+        id='search'
+        value={searchTerm}
+        isFocused
+        onInputChange={handleSearchInput}
+      >
+        <strong>Search: -{value}- </strong>
+      </InputWithLabel>
+      <button type='submit' disabled={!searchTerm}>Submit</button>
+    </form>
+  )
+}
 
 type InputProps = {
   id: string;
@@ -245,7 +255,6 @@ const InputWithLabel = ({
         id={id}
         type={type}
         value={value}
-        // autoFocus={isFocused}
         onChange={onInputChange}
       />
     </>
