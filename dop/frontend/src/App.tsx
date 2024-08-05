@@ -1,18 +1,10 @@
 import * as React from 'react';
 import axios from 'axios';
 import './App.css'
-import AppLayout from './components/AppLayout';
-import { ThemeContext, useTheme } from './contexts/ThemeContext';
-import { theme } from 'antd';
-
-type Story = {
-  objectID: string;
-  url: string;
-  title: string;
-  author: string;
-  num_comments: number;
-  points: number;
-};
+import { ThemeProvider } from './contexts/ThemeContext';
+import Story from './types/Story';
+import { SearchForm } from './components/SearchForm';
+import { List } from './components/List';
 
 // const getAsyncStories = (): Promise<{ data: { stories: Story[] } }> =>
 //   new Promise((resolve, reject) =>
@@ -56,7 +48,10 @@ type StoriesAction =
 // A reducer function always receives a state and an action.
 // a reducer always return a new state
 // a reducer action always associated with a type and as a best practice with a payload
-const storiesReducer = (state: StoriesState, action: StoriesAction) => {
+const storiesReducer = (
+  state: StoriesState,
+  action: StoriesAction
+) => {
   switch (action.type) {
     case 'STORIES_FETCH_INIT':
       return {
@@ -104,8 +99,6 @@ const useStorageState = (key: string, initialState: string) => {
 const API_ENDPOINT = 'https://hn.algolia.com/api/v1/search?query=';
 
 const App: React.FC = () => {
-
-  const [theme, setTheme] = React.useState<string>("green");
 
   // React custom hooks
   const [searchTerm, setSearchTerm] = useStorageState('search', 'React');
@@ -157,13 +150,12 @@ const App: React.FC = () => {
 
   const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     console.log(`handleSearchSubmit -> ${API_ENDPOINT}${searchTerm}`);
-    setUrl(`${API_ENDPOINT}${searchTerm}`)
-
+    setUrl(`${API_ENDPOINT}${searchTerm}`);
     event.preventDefault();
   }
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeProvider>
       <div>
         <h1>My Hacker Stories</h1>
 
@@ -188,112 +180,10 @@ const App: React.FC = () => {
         <hr />
         <p>{Math.random() * 100}</p>
       </div>
-    </ThemeContext.Provider>
+    </ThemeProvider>
   );
   // return <AppLayout />;
 
 };
-
-type SearchFormProps = {
-  searchTerm: string;
-  handleSearchInput: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  handleSearchSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
-}
-
-const SearchForm = ({
-  searchTerm,
-  handleSearchSubmit,
-  handleSearchInput }: SearchFormProps) => {
-  const { value, onChange } = useTheme();
-
-  return (
-    <form onSubmit={handleSearchSubmit}>
-      <InputWithLabel
-        id='search'
-        value={searchTerm}
-        isFocused
-        onInputChange={handleSearchInput}
-      >
-        <strong>Search: -{value}- </strong>
-      </InputWithLabel>
-      <button type='submit' disabled={!searchTerm}>Submit</button>
-    </form>
-  )
-}
-
-type InputProps = {
-  id: string;
-  isFocused: boolean;
-  value: string;
-  type?: string;
-  children: React.ReactNode;
-  onInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-}
-
-const InputWithLabel = ({
-  id,
-  isFocused,
-  value,
-  type = 'text',
-  children,
-  onInputChange }: InputProps) => {
-
-  const inputRef = React.useRef<HTMLInputElement>(null);
-
-  React.useEffect(() => {
-    if (isFocused && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [isFocused]);
-
-  return (
-    <>
-      <label htmlFor={id}>{children}</label>
-      &nbsp;
-      <input
-        ref={inputRef}
-        id={id}
-        type={type}
-        value={value}
-        onChange={onInputChange}
-      />
-    </>
-  )
-}
-
-type ListProps = {
-  list: Story[];
-  onRemoveItem: (item: Story) => void;
-};
-
-const List = ({ list, onRemoveItem }: ListProps) => (
-  <ul>
-    {list.map((item) => (
-      <Item key={item.objectID} item={item} onRemoveItem={onRemoveItem} />
-    ))}
-  </ul>
-)
-
-type ItemProps = {
-  item: Story;
-  onRemoveItem: (item: Story) => void;
-};
-
-// destructuring the props object right away in the component’s function signature.
-const Item = ({ item, onRemoveItem }: ItemProps) => (
-  <li>
-    <span>
-      <a href={item.url}>{item.title}</a>
-    </span>
-    <span>{item.author}</span>
-    <span>{item.num_comments}</span>
-    <span>{item.points}</span>
-    <span>
-      {/* onClick  inline handler */}
-      <button type='button' onClick={() => onRemoveItem(item)}>Dismiss</button>
-    </span>
-
-  </li>
-);
 
 export default App

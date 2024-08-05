@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { List, Spin } from 'antd';
-import { cityService, City } from '../services/CityService';
+import { cityService, City } from '../../services/CityService';
 
 const CityList: React.FC = () => {
     const [cities, setCities] = useState<City[]>([]);
@@ -57,4 +57,4 @@ const CityList: React.FC = () => {
     );
 };
 
-export default CityList;
+export { CityList };

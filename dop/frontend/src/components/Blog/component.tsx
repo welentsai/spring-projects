@@ -1,4 +1,4 @@
-import blogData from '../blog.json'
+import blogData from '../../blog.json'
 
 type Blog = {
     id: number,
@@ -7,7 +7,7 @@ type Blog = {
     author: string
 }
 
-export function Blog() {
+function Blog() {
     return (
         <div className="container">
             <div className="blog">
@@ -24,3 +24,5 @@ export function Blog() {
         </div>
     )
 }
+
+export { Blog };

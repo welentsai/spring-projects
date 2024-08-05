@@ -1,11 +1,11 @@
 import React from 'react';
 import { Layout } from 'antd';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Sidebar from './Sidebar';
-import Home from '../pages/Home';
-import Profile from '../pages/Profile';
-import Settings from '../pages/Settings';
-import CityList from './CityList';
+import Home from '../../pages/Home';
+import Profile from '../../pages/Profile';
+import Settings from '../../pages/Settings';
+import { Sidebar } from '../SideBar';
+import { CityList } from '../CityList';
 
 const { Sider, Content: AntContent } = Layout;
 
@@ -29,4 +29,4 @@ const AppLayout: React.FC = () => {
     );
 };
 
-export default AppLayout;
+export { AppLayout };
