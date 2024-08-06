@@ -5,7 +5,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.*;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class CompletableFutureTest {
@@ -170,5 +174,69 @@ public class CompletableFutureTest {
 
         System.out.println("reduce: " + reduce.get());
         System.out.println("testStream2 Done");
+    }
+
+    private String performTask(String taskName) {
+        try {
+            // Simulate some work
+            Thread.sleep((long) (Math.random() * 1000));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        System.out.println(taskName + " completed");
+        return taskName + " result";
+    }
+
+    @Test
+    @DisplayName("""
+            Test Stream with Suppliers
+            """)
+    public void testStreamWithSuppliers() {
+        // Step 1: Create a list of Suppliers
+        List<Supplier<String>> suppliers = new ArrayList<>();
+        suppliers.add(() -> performTask("Task 1"));
+        suppliers.add(() -> performTask("Task 2"));
+        suppliers.add(() -> performTask("Task 3"));
+        suppliers.add(() -> performTask("Task 4"));
+
+        // Step 2: Convert Suppliers to CompletableFutures
+        List<CompletableFuture<String>> futures = suppliers.stream()
+                .map(supplier -> CompletableFuture.supplyAsync(supplier))
+                .collect(Collectors.toList());
+
+        // Step 3: Use CompletableFuture.allOf() to wait for all futures
+        CompletableFuture<Void> allOf = CompletableFuture.allOf(
+                futures.toArray(new CompletableFuture[0])
+        );
+
+        allOf.join();
+
+        System.out.println("All Done !");
+
+        try {
+            Thread.sleep(5 * 1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    public void testCompletableFutureWithExecutor() {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+
+        CompletableFuture<String> future = CompletableFuture.supplyAsync(() ->
+             performTask("Task A")
+        , executor);
+
+        System.out.println("Future is created but not running yet");
+
+        // To start the task:
+        executor.execute(() -> {}); // This will trigger the executor to run the task
+
+        // Wait for the result
+        future.thenAccept(System.out::println).join();
+
+        executor.shutdown();
+
     }
 }
