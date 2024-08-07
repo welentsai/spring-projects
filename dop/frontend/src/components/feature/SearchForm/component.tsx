@@ -1,5 +1,5 @@
-import { useTheme } from "../../contexts/ThemeContext";
-import { InputWithLabel } from "../InputWithLabel";
+import { useTheme } from "../../../context/ThemeContext";
+import { InputWithLabel } from "../../common/InputWithLabel";
 
 type SearchFormProps = {
     searchTerm: string;

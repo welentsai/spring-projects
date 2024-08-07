@@ -1,4 +1,4 @@
-import blogData from '../../blog.json'
+import blogData from '../../../blog.json'
 
 type Blog = {
     id: number,

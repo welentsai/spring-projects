@@ -1,4 +1,4 @@
-import Story from "../../types/Story";
+import { Story } from "../../feature/Story/type";
 
 type ListProps = {
     list: Story[];

@@ -1,11 +1,11 @@
 import React from 'react';
 import { Layout } from 'antd';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Home from '../../pages/Home';
-import Profile from '../../pages/Profile';
-import Settings from '../../pages/Settings';
+import Home from '../../../pages/Home';
+import Profile from '../../../pages/Profile';
+import Settings from '../../../pages/Settings';
 import { Sidebar } from '../SideBar';
-import { CityList } from '../CityList';
+import { CityList } from '../../feature/CityList';
 
 const { Sider, Content: AntContent } = Layout;
 

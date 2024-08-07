@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { List, Spin } from 'antd';
-import { cityService, City } from '../../services/CityService';
+import { cityService, City } from '../../../services/CityService/CityService';
 
 const CityList: React.FC = () => {
     const [cities, setCities] = useState<City[]>([]);
