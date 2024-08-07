@@ -1,1 +1,2 @@
-export { List } from './component';
+export { List, Item } from './component';
+export type { ItemProps } from './component';
