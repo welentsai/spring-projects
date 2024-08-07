@@ -1,1 +1,0 @@
-export { StoryFinder } from './component';

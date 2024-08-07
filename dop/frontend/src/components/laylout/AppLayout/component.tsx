@@ -9,7 +9,7 @@ import { CityList } from '../../feature/CityList';
 
 const { Sider, Content: AntContent } = Layout;
 
-const AppLayout: React.FC = () => {
+const AppLayout = () => {
     return (
         <Router>
             <Layout className="min-h-screen">
