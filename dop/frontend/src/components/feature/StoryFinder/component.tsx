@@ -7,6 +7,7 @@ import { List } from '../../common/List';
 import { Story } from './type';
 import { storiesReducer, useStorageState } from './hooks';
 import { API_ENDPOINT } from './constants';
+import { LastSearches } from '../LastSearches';
 
 // const getAsyncStories = (): Promise<{ data: { stories: Story[] } }> =>
 //   new Promise((resolve, reject) =>
@@ -17,12 +18,38 @@ import { API_ENDPOINT } from './constants';
 //     )
 //   );
 
+const extractSearchTerm = (url: string) => url.replace(API_ENDPOINT, "");
+
+const getLastSearches = (urls: string[]) =>
+    urls
+        .reduce((result, url, index) => {
+            const searchTerm = extractSearchTerm(url);
+
+            if (index === 0) {
+                return result.concat(searchTerm);
+            }
+
+            const previousSearchTerms = result[result.length - 1];
+
+            if (searchTerm === previousSearchTerms) {
+                return result;
+            } else {
+                return result.concat(searchTerm);
+            }
+
+        }, [] as string[])
+        .slice(-6)
+        .slice(0, -1)
+        .map(extractSearchTerm);
+
+const getUrl = (searchTerm: string) => `${API_ENDPOINT}${searchTerm}`;
+
 const StoryFinder = () => {
 
     // React custom hooks
     const [searchTerm, setSearchTerm] = useStorageState('search', 'React');
 
-    const [url, setUrl] = React.useState(`${API_ENDPOINT}${searchTerm}`)
+    const [urls, setUrls] = React.useState<string[]>([getUrl(searchTerm)]);
 
     // React reducer (multiple state management)
     const [stories, dispatchStories] = React.useReducer(
@@ -30,15 +57,27 @@ const StoryFinder = () => {
         { data: [], isLoading: false, isError: false, }
     );
 
-    const handleFetchStories = React.useCallback(async () => {
 
-        // if searchTerm not present, e.g. null, empty string, undefined
-        // if (!searchTerm) return;
+    const handleSearch = (searchTerm: string) => {
+        const url = getUrl(searchTerm);
+        setUrls(urls.concat(url));
+    }
+
+    const handleLastSearch = (searchTerm: string) => {
+        setSearchTerm(searchTerm);
+        handleSearch(searchTerm);
+    }
+
+    const lastSearches = getLastSearches(urls);
+
+    const handleFetchStories = React.useCallback(async () => {
 
         dispatchStories({ type: 'STORIES_FETCH_INIT' });
 
         try {
-            const result = await axios.get(url);
+            const lastUrl = urls[urls.length - 1];
+
+            const result = await axios.get(lastUrl);
             dispatchStories({
                 type: 'STORIES_FETCH_SUCCESS',
                 payload: result.data.hits,
@@ -48,7 +87,7 @@ const StoryFinder = () => {
             dispatchStories({ type: 'STORIES_FETCH_FAILURE' })
         }
 
-    }, [url]);
+    }, [urls]);
 
     React.useEffect(() => {
         handleFetchStories();
@@ -68,8 +107,7 @@ const StoryFinder = () => {
     }
 
     const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-        console.log(`handleSearchSubmit -> ${API_ENDPOINT}${searchTerm}`);
-        setUrl(`${API_ENDPOINT}${searchTerm}`);
+        handleSearch(searchTerm);
         event.preventDefault();
     }
 
@@ -82,6 +120,11 @@ const StoryFinder = () => {
                     searchTerm={searchTerm}
                     handleSearchInput={handleSearchInput}
                     handleSearchSubmit={handleSearchSubmit}
+                />
+
+                <LastSearches
+                    lastSearches={lastSearches}
+                    onLastSearch={handleLastSearch}
                 />
 
                 <hr />
@@ -99,7 +142,7 @@ const StoryFinder = () => {
                 <hr />
                 <p>{Math.random() * 100}</p>
             </div>
-        </ThemeProvider>
+        </ThemeProvider >
     );
 };
 
