@@ -36,6 +36,12 @@ describe('SearchForm', () => {
 
         expect(searchFormProps.handleSearchSubmit).toHaveBeenCalledTimes(1);
     })
+
+    it('renders snapshot', () => {
+        const { container } = render(<SearchForm {...searchFormProps} />);
+
+        expect(container.firstChild).toMatchSnapshot();
+    })
 });
 
 
