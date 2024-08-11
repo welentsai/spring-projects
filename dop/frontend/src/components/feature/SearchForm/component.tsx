@@ -1,13 +1,13 @@
 import { useTheme } from "../../../context/ThemeContext";
 import { InputWithLabel } from "../../common/InputWithLabel";
 
-type SearchFormProps = {
+export type SearchFormProps = {
     searchTerm: string;
     handleSearchInput: (event: React.ChangeEvent<HTMLInputElement>) => void;
     handleSearchSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
 }
 
-const SearchForm = ({
+export const SearchForm = ({
     searchTerm,
     handleSearchSubmit,
     handleSearchInput }: SearchFormProps) => {
@@ -26,6 +26,4 @@ const SearchForm = ({
             <button type='submit' disabled={!searchTerm}>Submit</button>
         </form>
     )
-}
-
-export { SearchForm };
+};

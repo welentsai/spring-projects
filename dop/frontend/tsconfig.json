@@ -11,7 +11,8 @@
     "skipLibCheck": true,
     "types": [
       "vitest/globals",
-      "@testing-library/jest-dom"
+      "@testing-library/jest-dom",
+      "@testing-library/react",
     ],
     /* Bundler mode */
     "moduleResolution": "Bundler",

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 
@@ -36,6 +36,25 @@ describe('Item Component', () => {
             'href',
             'https://reactjs.org/'
         );
+        expect(screen.getByRole('button')).toBeInTheDocument();
+    })
+
+    it('render a clickable dismiss button', () => {
+        render(<Item item={storyOne} onRemoveItem={() => { }} />);
+
+        //screen.getByRole('');  // neat feature (it suggests roles if provided role not available) 
+
+        expect(screen.getByRole('button')).toBeInTheDocument();
+    })
+
+    it('clicking the dismiss button calls the callback handler', () => {
+        const handleRemoveItem = vi.fn();
+
+        render(<Item item={storyOne} onRemoveItem={handleRemoveItem} />);
+
+        fireEvent.click(screen.getByRole('button'));
+
+        expect(handleRemoveItem).toHaveBeenCalledTimes(1);
     })
 
 
