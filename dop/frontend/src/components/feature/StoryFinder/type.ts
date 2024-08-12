@@ -9,8 +9,14 @@ export type Story = {
 
 export type StoriesState = {
     data: Story[];
+    page: number;
     isLoading: boolean;
     isError: boolean;
+}
+
+export type StoryPayload = {
+    list: Story[];
+    page: number;
 }
 
 export type StoriesFetchInitAction = {
@@ -19,7 +25,10 @@ export type StoriesFetchInitAction = {
 
 export type StoriesFetchSuccessAction = {
     type: 'STORIES_FETCH_SUCCESS';
-    payload: Story[];
+    payload: {
+        list: Story[];
+        page: number;
+    };
 };
 
 export type StoriesFetchFailureAction = {
