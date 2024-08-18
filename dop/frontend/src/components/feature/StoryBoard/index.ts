@@ -1,0 +1,1 @@
+export { StoryBoard } from './component'

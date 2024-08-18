@@ -11,7 +11,7 @@ export const SearchForm = ({
     searchTerm,
     handleSearchSubmit,
     handleSearchInput }: SearchFormProps) => {
-    const { value } = useTheme();
+    const { theme, handleTheme } = useTheme();
 
     return (
         <form onSubmit={handleSearchSubmit}>
@@ -21,9 +21,9 @@ export const SearchForm = ({
                 isFocused
                 onInputChange={handleSearchInput}
             >
-                <strong>Search: -{value}- </strong>
+                <strong>Search: -{theme}- </strong>
             </InputWithLabel>
-            <button type='submit' disabled={!searchTerm}>Submit</button>
+            <button type='submit' disabled={!searchTerm} onClick={() => handleTheme(searchTerm)}>Submit</button>
         </form>
     )
 };

@@ -1,0 +1,1 @@
+export { ComponentWithRefInstanceVariable } from './component'

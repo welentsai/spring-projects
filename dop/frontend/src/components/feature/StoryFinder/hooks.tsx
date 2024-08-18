@@ -48,8 +48,8 @@ const storiesReducer = (
                 ...state,
                 data: state.data.filter(
                     (story) => action.payload.objectID !== story.objectID
-                ),
-            }
+                )
+            };
         default:
             throw new Error();
     }

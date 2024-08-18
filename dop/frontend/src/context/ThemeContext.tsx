@@ -31,7 +31,7 @@ const useTheme = () => {
         setTheme(value);
     }
 
-    return { value: theme, onChange: handleTheme }
+    return { theme, handleTheme }
 }
 
 

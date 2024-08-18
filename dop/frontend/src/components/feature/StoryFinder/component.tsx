@@ -128,13 +128,11 @@ const StoryFinder = () => {
         <ThemeProvider>
             <div>
                 <h1>My Hacker Stories</h1>
-
                 <SearchForm
                     searchTerm={searchTerm}
                     handleSearchInput={handleSearchInput}
                     handleSearchSubmit={handleSearchSubmit}
                 />
-
                 <LastSearches
                     lastSearches={lastSearches}
                     onLastSearch={handleLastSearch}
