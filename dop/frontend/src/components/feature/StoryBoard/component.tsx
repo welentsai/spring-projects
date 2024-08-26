@@ -14,14 +14,7 @@ const initialState: StoriesState = {
 const api = `${API_ENDPOINT}react`
 
 const StoryBoard = () => {
-    const [state, handleUrl] = useStoryApi(api, initialState);
-
-    const handleRemoveStory = (item: Story) => {
-        // dispatchStories({
-        //     type: 'REMOVE_STORY',
-        //     payload: item
-        // })
-    }
+    const [state, handleUrl, handleRemoveStory] = useStoryApi(api, initialState);
 
     React.useEffect(() => {
 

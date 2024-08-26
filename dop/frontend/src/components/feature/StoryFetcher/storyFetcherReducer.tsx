@@ -2,7 +2,7 @@ import * as React from 'react';
 import axios from 'axios';
 import { StoriesAction, StoriesState, Story } from '../StoryFinder';
 
-
+// Reducer = 現時 State + Action => 下個 State
 const storyReducer = (state: StoriesState, action: StoriesAction): StoriesState => {
     switch (action.type) {
         case 'STORIES_FETCH_INIT':
@@ -22,15 +22,28 @@ const storyReducer = (state: StoriesState, action: StoriesAction): StoriesState 
         case 'STORIES_FETCH_FAILURE':
             return { ...state };
         case 'REMOVE_STORY':
-            return { ...state };
+            return {
+                ...state,
+                data: state.data.filter(
+                    (story) => action.payload.objectID !== story.objectID
+                )
+            };
     }
 }
 
 export const useStoryApi = (initialUrl: string, initialState: StoriesState):
-    [StoriesState, (url: string) => void] => {
+    [StoriesState, (url: string) => void, (item: Story) => void] => {
 
     const [url, setUrl] = React.useState<string>(initialUrl);
     const [state, dispatch] = React.useReducer(storyReducer, initialState);
+
+    const handleRemoveStory = (item: Story) => {
+        dispatch({
+            type: 'REMOVE_STORY',
+            payload: item
+        })
+    }
+
 
     React.useEffect(() => {
         let didCancel = false;
@@ -63,5 +76,5 @@ export const useStoryApi = (initialUrl: string, initialState: StoriesState):
     }, [url]);
 
 
-    return [state, setUrl];
+    return [state, setUrl, handleRemoveStory];
 }
