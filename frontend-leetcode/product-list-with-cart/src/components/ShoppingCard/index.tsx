@@ -1,0 +1,2 @@
+
+export { ShoppingCard } from './component'
