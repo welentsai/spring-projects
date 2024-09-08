@@ -36,9 +36,6 @@ export const useOrder = () => {
     const { orders, setOrders } = React.useContext(OrderContext)
 
     const handleOrderChange = (newOrder: Order) => {
-
-        console.log('new order:', newOrder)
-
         let found = false;
 
         const newOrders = orders.map(order => {
@@ -49,7 +46,6 @@ export const useOrder = () => {
             return order;
         }).filter((order) => order.quantity > 0);
 
-        console.log('found:', found);
         if (found === false && newOrder.quantity > 0) { // Add new order that not exist
             setOrders([...orders, newOrder]);
         } else {
@@ -58,10 +54,10 @@ export const useOrder = () => {
 
     }
 
-    // to show log only
-    React.useEffect(() => {
-        console.log(orders);
-    }, [orders]);
+    // // to show log only
+    // React.useEffect(() => {
+    //     console.log(orders);
+    // }, [orders]);
 
     return { orders, handleOrderChange }
 }

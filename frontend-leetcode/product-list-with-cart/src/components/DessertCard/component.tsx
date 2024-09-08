@@ -40,6 +40,12 @@ export const DessertCard = ({ dessert }: DessertCardProps) => {
 
     }, [orders]);
 
+    // React.useEffect(() => {
+    //     if (dessertState.purchased) {
+    //         handleOrderChange({ dessert, quantity: dessertState.quantity })
+    //     }
+    // }, [dessertState]);
+
     return (
         <div>
             <div className='relative'>
