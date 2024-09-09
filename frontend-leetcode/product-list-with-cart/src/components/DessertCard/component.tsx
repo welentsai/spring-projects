@@ -7,11 +7,27 @@ import { Dessert } from './type';
 import { dessertReducer } from './hook';
 import { useOrder } from '../../context/OrderContext';
 
+export type DessertCardListProps = {
+    desserts: Array<Dessert>
+}
+
+export const DesertCardList = ({ desserts }: DessertCardListProps) => {
+
+    return (
+        desserts.map((dessert: Dessert, index: number) => (
+            <DessertCard
+                dessert={dessert} key={index} />
+        ))
+    )
+}
+
 export type DessertCardProps = {
     dessert: Dessert
 }
 
 export const DessertCard = ({ dessert }: DessertCardProps) => {
+    console.log('DessertCard Render!', Date.now(), dessert.name);
+
     const [dessertState, dispatchDessertAction] = React.useReducer(
         dessertReducer,
         { purchased: false, quantity: 0 });
@@ -32,19 +48,26 @@ export const DessertCard = ({ dessert }: DessertCardProps) => {
         handleOrderChange({ dessert, quantity: 1 })
     }
 
-    React.useEffect(() => {
-        const dessertExists = orders.find(order => order.dessert === dessert);
-        if (!dessertExists) {
+    const memoIsOrdered = orders.find(order => order.dessert === dessert) ? true : false;
+
+    const handleIsOrderedChange = React.useCallback(() => {
+        if (!memoIsOrdered) {
             dispatchDessertAction({ 'type': 'INIT_ACTION' })
         }
+    }, [memoIsOrdered]);
 
-    }, [orders]);
+    React.useEffect(() => {
+        handleIsOrderedChange()
+    }, [handleIsOrderedChange])
 
     // React.useEffect(() => {
-    //     if (dessertState.purchased) {
-    //         handleOrderChange({ dessert, quantity: dessertState.quantity })
+    //     const dessertExists = orders.find(order => order.dessert === dessert);
+    //     if (!dessertExists) {
+    //         dispatchDessertAction({ 'type': 'INIT_ACTION' })
     //     }
-    // }, [dessertState]);
+
+    // }, [orders]);
+
 
     return (
         <div>

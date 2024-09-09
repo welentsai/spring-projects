@@ -1,7 +1,7 @@
 import './App.css'
 
 import desserts from './data.json'
-import { Dessert, DessertCard } from './components/DessertCard'
+import { DesertCardList, Dessert, DessertCard } from './components/DessertCard'
 import { ShoppingCard } from './components/ShoppingCard'
 import { OrderProvider } from './context/OrderContext'
 
@@ -15,10 +15,7 @@ function App() {
             Desserts
           </h1>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {desserts.map((dessert: Dessert, index: number) => (
-              <DessertCard
-                dessert={dessert} key={index} />
-            ))}
+            <DesertCardList desserts={desserts} />
           </div>
         </div>
         <div className='sm:w-1/4'>
