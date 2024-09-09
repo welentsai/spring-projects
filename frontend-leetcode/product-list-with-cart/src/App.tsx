@@ -1,7 +1,7 @@
 import './App.css'
 
 import desserts from './data.json'
-import { DesertCardList, Dessert, DessertCard } from './components/DessertCard'
+import { DesertCardList } from './components/DessertCard'
 import { ShoppingCard } from './components/ShoppingCard'
 import { OrderProvider } from './context/OrderContext'
 

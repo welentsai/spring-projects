@@ -48,26 +48,15 @@ export const DessertCard = ({ dessert }: DessertCardProps) => {
         handleOrderChange({ dessert, quantity: 1 })
     }
 
-    const memoIsOrdered = orders.find(order => order.dessert === dessert) ? true : false;
+    const memoIsOrdered = React.useMemo(() => orders.some(order =>
+        order.dessert.name === dessert.name)
+        , [orders, dessert]);
 
-    const handleIsOrderedChange = React.useCallback(() => {
+    React.useEffect(() => {
         if (!memoIsOrdered) {
             dispatchDessertAction({ 'type': 'INIT_ACTION' })
         }
-    }, [memoIsOrdered]);
-
-    React.useEffect(() => {
-        handleIsOrderedChange()
-    }, [handleIsOrderedChange])
-
-    // React.useEffect(() => {
-    //     const dessertExists = orders.find(order => order.dessert === dessert);
-    //     if (!dessertExists) {
-    //         dispatchDessertAction({ 'type': 'INIT_ACTION' })
-    //     }
-
-    // }, [orders]);
-
+    }, [memoIsOrdered])
 
     return (
         <div>
