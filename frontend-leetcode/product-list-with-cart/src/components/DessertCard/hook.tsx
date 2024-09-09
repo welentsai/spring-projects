@@ -49,7 +49,8 @@ export const dessertReducer = (state: DessertCardState, action: DessertCardActio
                 purchased: false,
             } : {
                 ...state,
-                quantity: state.quantity + action.quantity
+                quantity: state.quantity + action.quantity,
+                purchased: true
             }
 
     }
