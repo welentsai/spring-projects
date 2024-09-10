@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Dessert } from '../components/DessertCard';
+import { useOrderStore } from '../store/orderStore';
 
 export type Order = {
     dessert: Dessert,
@@ -33,7 +34,8 @@ export const OrderProvider = ({ children }: OrderProviderProps) => {
 
 export const useOrder = () => {
 
-    const { orders, setOrders } = React.useContext(OrderContext)
+    // const { orders, setOrders } = React.useContext(OrderContext)
+    const { orders, setOrders } = useOrderStore();
 
     const handleOrderChange = (newOrder: Order) => {
         let found = false;

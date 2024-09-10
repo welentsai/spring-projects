@@ -48,7 +48,7 @@ export const DessertCard = ({ dessert }: DessertCardProps) => {
         handleOrderChange({ dessert, quantity: 1 })
     }
 
-    const memoIsOrdered = React.useMemo(() => orders.some(order =>
+    const memoIsOrdered = React.useMemo(() => orders.some((order) =>
         order.dessert.name === dessert.name)
         , [orders, dessert]);
 
