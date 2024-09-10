@@ -70,56 +70,67 @@ export const ShoppingCard = () => {
                         Confirm Order
                     </button>
 
-                    {openModel && (
-                        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4">
-                            <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-                                <div className='flex'>
-                                    <img src={OrderConfirmed} className='mr-auto w-8' />
-                                </div>
-                                <p className='font-bold text-left text-2xl'>Order Confirmed</p>
-                                <p className='m-2 text-left text-xs text-gray-300'> we hope you enjoy your food !!</p>
-                                <div >
-                                    {orders.map((order) => (
-                                        <div
-                                            key={uuidv4()}
-                                            className='flex justify-between items-center mx-5 bg-gray-200'>
-                                            <div className='flex m-2'>
-                                                <img className='w-10 h-10'
-                                                    src={order.dessert.image.desktop}
-                                                    alt={order.dessert.name}
-                                                />
-                                                <div className='mx-2'>
-                                                    <p className='text-left text-xs'>{order.dessert.name}</p>
-                                                    <div className='flex'>
-                                                        <p className='my-1 text-left text-xs text-orange-500'>{order.quantity}<span className='text-xs'>x</span></p>
-                                                        <p className='my-1 text-left text-xs text-gray-400'><span className='text-xs'>@</span>{order.dessert.price}</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <p className='text-xs px-2'>
-                                                ${order.quantity * order.dessert.price}
-                                            </p>
-                                        </div>))}
-                                    <div className='flex items-center justify-between mx-5 bg-gray-200'>
-                                        <div className='m-2 text-xs text-gray-500'> Order Total </div>
-                                        <div className='m-2 text-sm font-bold'>
-                                            ${orders
-                                                .reduce((total, order) => total + order.quantity * order.dessert.price, 0)} </div>
-                                    </div>
-                                    <div className='mx-5'>
-                                        <button
-                                            className='w-full py-1.5 mt-5 mb-3 flex items-center justify-center  bg-orange-600 rounded-full text-white text-xs'
-                                            onClick={() => closeModel()}>
-                                            Start New Order
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                    {openModel &&
+                        <ConfirmedModal orders={orders} handleCloseModal={closeModel} />
+                    }
                 </div>
             )}
 
+        </div>
+    )
+}
+
+type ConfirmedModelProps = {
+    orders: Array<Order>,
+    handleCloseModal: () => void
+}
+
+const ConfirmedModal = ({ orders, handleCloseModal }: ConfirmedModelProps) => {
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+                <div className='flex'>
+                    <img src={OrderConfirmed} className='mr-auto w-8' />
+                </div>
+                <p className='font-bold text-left text-2xl'>Order Confirmed</p>
+                <p className='m-2 text-left text-xs text-gray-300'> we hope you enjoy your food !!</p>
+                <div >
+                    {orders.map((order) => (
+                        <div
+                            key={uuidv4()}
+                            className='flex justify-between items-center mx-5 bg-gray-200'>
+                            <div className='flex m-2'>
+                                <img className='w-10 h-10'
+                                    src={order.dessert.image.desktop}
+                                    alt={order.dessert.name}
+                                />
+                                <div className='mx-2'>
+                                    <p className='text-left text-xs'>{order.dessert.name}</p>
+                                    <div className='flex'>
+                                        <p className='my-1 text-left text-xs text-orange-500'>{order.quantity}<span className='text-xs'>x</span></p>
+                                        <p className='my-1 text-left text-xs text-gray-400'><span className='text-xs'>@</span>{order.dessert.price}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <p className='text-xs px-2'>
+                                ${order.quantity * order.dessert.price}
+                            </p>
+                        </div>))}
+                    <div className='flex items-center justify-between mx-5 bg-gray-200'>
+                        <div className='m-2 text-xs text-gray-500'> Order Total </div>
+                        <div className='m-2 text-sm font-bold'>
+                            ${orders
+                                .reduce((total, order) => total + order.quantity * order.dessert.price, 0)} </div>
+                    </div>
+                    <div className='mx-5'>
+                        <button
+                            className='w-full py-1.5 mt-5 mb-3 flex items-center justify-center  bg-orange-600 rounded-full text-white text-xs'
+                            onClick={() => handleCloseModal()}>
+                            Start New Order
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     )
 }
