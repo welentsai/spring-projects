@@ -6,9 +6,9 @@ export type InterestInputProps = {
 export const InterestInput = ({ interest }: InterestInputProps) => {
 
     return (
-        <div className="flex overflow-hidden rounded-md border border-gray-300">
+        <div className="flex justify-between overflow-hidden rounded-md border border-gray-300">
             <input
-                className="px-2 py-1"
+                className="px-2 py-1 w-32"
                 type='text'
                 value={interest}
                 placeholder="Enter Interest"

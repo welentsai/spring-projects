@@ -25,7 +25,7 @@ function App() {
               />
             </div>
             {/* Right column */}
-            <div className="w-1/2 bg-blue-800 p-4 text-white">
+            <div className="w-1/2  p-4 bg-blue-800 text-white">
               <MortgageResult
                 monthlyRepayment={0}
                 totalRepayment={0}

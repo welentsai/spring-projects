@@ -5,9 +5,9 @@ export type YearInputPros = {
 
 export const YearInput = ({ year }: YearInputPros) => {
     return (
-        <div className="w-auto flex overflow-hidden rounded-md border border-gray-300">
+        <div className="flex justify-between overflow-hidden rounded-md border border-gray-300">
             <input
-                className="px-2 py-1"
+                className="px-2 py-1 w-36"
                 type='text'
                 value={year}
                 placeholder="Enter Year"
