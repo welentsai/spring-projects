@@ -36,7 +36,7 @@ export const CurrencyInput = ({ amount, handleAmountChange }: CurrencyInputProps
     }
 
     return (
-        <div className="flex items-stretch max-w-md overflow-hidden rounded-md border border-gray-300 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
+        <div className="flex items-stretch w-auto overflow-hidden rounded-md border border-gray-300 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
             <div className="flex items-center justify-center bg-sky-300 px-3">
                 <span className="text-white font-semibold">£</span>
             </div>
@@ -45,7 +45,7 @@ export const CurrencyInput = ({ amount, handleAmountChange }: CurrencyInputProps
                 value={displayValue}
                 onChange={handleInputChange}
                 onBlur={handleBlur}
-                className="flex-grow py-2 px-3 text-gray-700 bg-white focus:outline-none"
+                className="flex-grow py-2 px-3 w text-gray-700 bg-white focus:outline-none"
                 placeholder="Enter amount"
             />
         </div>
