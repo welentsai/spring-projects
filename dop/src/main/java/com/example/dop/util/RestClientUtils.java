@@ -5,6 +5,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.client.RestClient;
 
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class RestClientUtils {
 
@@ -30,8 +31,8 @@ public class RestClientUtils {
      * @param uriVariables Optional URI variables
      * @return HttpResponse wrapper containing the response
      */
-    public <T> T get(String uri, Class<T> responseType, Object... uriVariables) {
-        return executeRequest(builder ->
+    public <T> T get(Supplier<RestClient> restClientSupplier, String uri, Class<T> responseType, Object... uriVariables) {
+        return executeRequest(restClientSupplier, builder ->
                         builder.get()
                                 .uri(uri, uriVariables)
                 , responseType);
@@ -45,8 +46,9 @@ public class RestClientUtils {
      * @param uriVariables Optional URI variables
      * @return HttpResponse wrapper containing the response
      */
-    public <T> T get(String uri, Class<T> responseType, QueryParams queryParams, Object... uriVariables) {
-        return executeRequest(builder ->
+    public <T> T get(Supplier<RestClient> restClientSupplier, String uri, Class<T> responseType, QueryParams queryParams, Object... uriVariables) {
+        return executeRequest(restClientSupplier,
+                builder ->
                         builder.get()
                                 .uri(uriBuilder -> uriBuilder
                                         .path(uri)
@@ -65,8 +67,10 @@ public class RestClientUtils {
      * @param uriVariables Optional URI variables
      * @return HttpResponse wrapper containing the response
      */
-    public <T, R> R post(String uri, T body, Class<R> responseType, Object... uriVariables) {
-        return executeRequest(builder ->
+    public <T, R> R post(Supplier<RestClient> restClientSupplier, String uri, T body, Class<R> responseType, Object... uriVariables) {
+        return executeRequest(
+                restClientSupplier,
+                builder ->
                         builder.post()
                                 .uri(uri, uriVariables)
                                 .body(body)
@@ -77,10 +81,11 @@ public class RestClientUtils {
      * Generic request execution with response type class
      */
     private <T> T executeRequest(
+            Supplier<RestClient> restClientSupplier,
             Function<RestClient, RestClient.RequestHeadersSpec<?>> requestBuilder,
             Class<T> responseType) {
         try {
-            var response = requestBuilder.apply(restClient)
+            var response = requestBuilder.apply(restClientSupplier.get())
                     .retrieve()
                     .body(responseType);
 
