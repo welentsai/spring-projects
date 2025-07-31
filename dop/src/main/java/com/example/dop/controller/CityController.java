@@ -12,6 +12,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
 import java.util.List;
 
+import static com.example.dop.util.LoggingWrapper.withLoggingAndExceptionHandling;
+
 @RestController
 @RequestMapping("/api/v1/cities")
 public class CityController {
@@ -25,7 +27,9 @@ public class CityController {
     @GetMapping
     public ResponseEntity<List<CityEntity>> getAllCities() throws InterruptedException {
         Thread.sleep(1000);
-        List<CityEntity> cities = cityService.getAllCities();
+
+        List<CityEntity> cities = withLoggingAndExceptionHandling("cityService.getAllCities", () -> cityService.getAllCities()).get();
+//        List<CityEntity> cities = cityService.getAllCities();
 
         return ResponseEntity.ok(cities);
     }

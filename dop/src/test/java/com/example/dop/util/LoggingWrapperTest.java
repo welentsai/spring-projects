@@ -8,7 +8,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class FunctionalWrapperTest {
+import static com.example.dop.util.LoggingWrapper.withLoggingAndExceptionHandling;
+
+public class LoggingWrapperTest {
 
     @Test
     void shouldHaveLog() throws JsonProcessingException {
@@ -19,10 +21,20 @@ public class FunctionalWrapperTest {
         );
 
         String cityListJson = JsonUtils.toJson(cityList);
-        var toJsonFnWithLoggingFn = FunctionalWrapper.withLoggingAndExceptionHandlingSafe("JsonUtils.toJson", JsonUtils::toJson);
+        var toJsonFnWithLoggingFn = LoggingWrapper.withLoggingAndExceptionHandlingSafe("JsonUtils.toJson", JsonUtils::toJson);
         var resp = toJsonFnWithLoggingFn.apply(cityList);
         System.out.println(cityListJson);
         System.out.println(resp);
         Assertions.assertEquals(cityListJson, resp.get());
+    }
+
+    Integer addOne(Integer input) {
+        return input + 1;
+    }
+
+    @Test
+    void shouldHaveLog2() {
+        var resp = withLoggingAndExceptionHandling("lambda", this::addOne).apply(1);
+        System.out.println(resp);
     }
 }

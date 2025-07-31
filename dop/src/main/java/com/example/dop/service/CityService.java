@@ -6,6 +6,9 @@ import java.util.List;
 
 public interface CityService {
     List<CityEntity> getAllCities();
+
     CityEntity getCityById(String id);
+
     CityEntity addCity(CityEntity cityEntity);
+
 }
