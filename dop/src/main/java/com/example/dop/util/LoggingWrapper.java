@@ -1,5 +1,6 @@
 package com.example.dop.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,10 +82,66 @@ public class LoggingWrapper {
         };
     }
 
+    /**
+     * Method with custom exception handler
+     */
+    public static <T, R> Function<T, R> tryWithLoggingAndCustomHandler(
+            String functionName,
+            ThrowingFunction<T, R> function,
+            Function<Exception, R> errorHandler) {
+        return t -> {
+            try {
+                return getResp(functionName, function, t);
+            } catch (Exception e) {
+                logger.error("Exception occurred: {}", e.getMessage(), e);
+                return errorHandler.apply(e);
+            }
+        };
+    }
+
+    /**
+     * Method with custom exception handler
+     */
+    public static <R> Supplier<R> tryWithLoggingAndCustomHandler(
+            String functionName,
+            ThrowingSupplier<R> function,
+            Function<Exception, R> errorHandler) {
+        return () -> {
+            try {
+                return getResp(functionName, function);
+            } catch (Exception e) {
+                logger.error("Exception occurred: {}", e.getMessage(), e);
+                return errorHandler.apply(e);
+            }
+        };
+    }
+
     private static <T, R> R getResp(String functionName, ThrowingFunction<T, R> function, T t) throws Exception {
-        logger.info("[{}] request: {}", functionName, t);
+        loggingExecuting(functionName, "start");
+        logging(functionName, "request", t);
         R resp = function.apply(t);
-        logger.info("[{}] response: {}", functionName, JsonUtils.toJson(resp));
+        logging(functionName, "response", resp);
+        loggingExecuting(functionName, "end");
         return resp;
+    }
+
+    private static <R> R getResp(String functionName, ThrowingSupplier<R> function) throws Exception {
+        loggingExecuting(functionName, "start");
+        R resp = function.get();
+        logging(functionName, "response", resp);
+        loggingExecuting(functionName, "end");
+        return resp;
+    }
+
+    private static <T> void logging(String functionName, String tag, T t) {
+        try {
+            logger.info("[{}] {}: {}", functionName, tag, JsonUtils.toJson(t));
+        } catch (JsonProcessingException e) {
+            logger.error("[{}] {} JasonParseException: {}", functionName, tag, e.getMessage(), e);
+        }
+    }
+
+    private static void loggingExecuting(String functionName, String tag) {
+        logger.info("[{}] executing...{}", functionName, tag);
     }
 }
