@@ -67,7 +67,8 @@ public class LoggingWrapperTest {
 
     @Test
     void shouldHaveLogWithCustomExceptionHandlingFunction() {
-        var addOneWithLoggingFn = LoggingWrapper.tryWithLoggingAndCustomHandler("addOne",
+        var addOneWithLoggingFn = tryWithLoggingAndCustomHandler(
+                "addOne",
                 this::addOne,
                 error -> {
                     System.out.println(error);
@@ -89,5 +90,18 @@ public class LoggingWrapperTest {
 
         var resp = addOneWithLoggingFn.apply(9);
         System.out.println("resp:" + resp);
+    }
+
+    @Test
+    void shouldHaveLogWithExceptionHandling() {
+        var externalCall = tryWithLoggingAndCustomHandler("HTTP Get",
+                OkHttpClientUtils::get,
+                error -> {
+                    System.out.println("error:" + error);
+                    throw new RuntimeException("test");
+                });
+
+        var resp = externalCall.apply("https://hn.algolia.com/api/v1/search?query=react");
+        System.out.println(resp);
     }
 }

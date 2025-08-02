@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -117,21 +118,36 @@ public class LoggingWrapper {
     }
 
     private static <T, R> R getResp(String functionName, ThrowingFunction<T, R> function, T t) throws Exception {
-        loggingExecuting(functionName, "start");
-        logging(functionName, "request", t);
-        R resp = function.apply(t);
-        logging(functionName, "response", resp);
-        loggingExecuting(functionName, "end");
-        return resp;
+        return executeWithTiming(functionName, () -> {
+            logging(functionName, "request", t);
+            R resp = function.apply(t);
+            logging(functionName, "response", resp);
+            return resp;
+        });
     }
 
     private static <R> R getResp(String functionName, ThrowingSupplier<R> function) throws Exception {
-        loggingExecuting(functionName, "start");
-        R resp = function.get();
-        logging(functionName, "response", resp);
-        loggingExecuting(functionName, "end");
-        return resp;
+        return executeWithTiming(functionName, () -> {
+            R resp = function.get();
+            logging(functionName, "response", resp);
+            return resp;
+        });
     }
+
+    // Common execution logic with timing
+    private static <R> R executeWithTiming(String functionName, ThrowingSupplier<R> execution) throws Exception {
+        long startTime = System.currentTimeMillis();
+        try {
+            loggingExecuting(functionName, "start");
+            R result = execution.get();
+            loggingExecuting(functionName, "end");
+            return result;
+        } finally {
+            long duration = System.currentTimeMillis() - startTime;
+            logger.info("[{}] execution completed in {}ms", functionName, duration);
+        }
+    }
+
 
     private static <T> void logging(String functionName, String tag, T t) {
         try {
