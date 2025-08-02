@@ -5,7 +5,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -51,10 +50,7 @@ public class LoggingWrapper {
     public static <R> Supplier<R> withLoggingAndExceptionHandling(String functionName, ThrowingSupplier<R> supplier) {
         return () -> {
             try {
-                logger.info("executing [{}]", functionName);
-                R resp = supplier.get();
-                logger.info("[{}] response: {}", functionName, JsonUtils.toJson(resp));
-                return resp;
+                return getResp(functionName, supplier);
             } catch (RuntimeException e) {
                 logger.error("[{}] Runtime exception occurred: {}", functionName, e.getMessage(), e);
                 throw e;
@@ -119,9 +115,9 @@ public class LoggingWrapper {
 
     private static <T, R> R getResp(String functionName, ThrowingFunction<T, R> function, T t) throws Exception {
         return executeWithTiming(functionName, () -> {
-            logging(functionName, "request", t);
+            logRequest(functionName, t);
             R resp = function.apply(t);
-            logging(functionName, "response", resp);
+            logResponse(functionName, resp);
             return resp;
         });
     }
@@ -129,7 +125,7 @@ public class LoggingWrapper {
     private static <R> R getResp(String functionName, ThrowingSupplier<R> function) throws Exception {
         return executeWithTiming(functionName, () -> {
             R resp = function.get();
-            logging(functionName, "response", resp);
+            logResponse(functionName, resp);
             return resp;
         });
     }
@@ -137,27 +133,29 @@ public class LoggingWrapper {
     // Common execution logic with timing
     private static <R> R executeWithTiming(String functionName, ThrowingSupplier<R> execution) throws Exception {
         long startTime = System.currentTimeMillis();
-        try {
-            loggingExecuting(functionName, "start");
-            R result = execution.get();
-            loggingExecuting(functionName, "end");
-            return result;
-        } finally {
-            long duration = System.currentTimeMillis() - startTime;
-            logger.info("[{}] execution completed in {}ms", functionName, duration);
-        }
+        logger.info("[{}] executing...start", functionName);
+        R result = execution.get();
+        logger.info("[{}] executing...end", functionName);
+        long duration = System.currentTimeMillis() - startTime;
+        logger.info("[{}] execution completed in {}ms", functionName, duration);
+        return result;
+    }
+
+    // Simplified logging methods using var and switch expressions
+    private static <T> void logRequest(String functionName, T request) {
+        log(functionName, "request", request);
+    }
+
+    private static <T> void logResponse(String functionName, T response) {
+        log(functionName, "response", response);
     }
 
 
-    private static <T> void logging(String functionName, String tag, T t) {
+    private static <T> void log(String functionName, String tag, T data) {
         try {
-            logger.info("[{}] {}: {}", functionName, tag, JsonUtils.toJson(t));
+            logger.info("[{}] {}: {}", functionName, tag, JsonUtils.toJson(data));
         } catch (JsonProcessingException e) {
             logger.error("[{}] {} JasonParseException: {}", functionName, tag, e.getMessage(), e);
         }
-    }
-
-    private static void loggingExecuting(String functionName, String tag) {
-        logger.info("[{}] executing...{}", functionName, tag);
     }
 }
