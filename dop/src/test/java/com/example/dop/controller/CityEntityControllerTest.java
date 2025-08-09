@@ -1,11 +1,14 @@
 package com.example.dop.controller;
 
+import com.example.dop.config.InterceptorConfig;
 import com.example.dop.model.CityEntity;
 import com.example.dop.service.CityServiceImpl;
+import com.example.dop.util.RequestResponseLoggingInterceptor;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -18,6 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(CityController.class)
+@Import({InterceptorConfig.class}) // Import the config that creates the bean
 public class CityEntityControllerTest {
 
     @Autowired
@@ -25,6 +29,9 @@ public class CityEntityControllerTest {
 
     @MockBean
     private CityServiceImpl cityService;
+
+//    @MockBean
+//    private RequestResponseLoggingInterceptor requestResponseLoggingInterceptor; // Mock the interceptor
 
     @Test
     void getAllCities() throws Exception {
