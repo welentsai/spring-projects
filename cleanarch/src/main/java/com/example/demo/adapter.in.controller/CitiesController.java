@@ -1,8 +1,9 @@
 package com.example.demo.adapter.in.controller;
 
 import com.example.demo.usecase.ports.in.FindCitiesInput;
-import com.example.demo.usecase.ports.in.FindCitiesOutput;
+import com.example.demo.usecase.ports.in.FindCitiesResult;
 import com.example.demo.usecase.ports.in.FindCitiesUseCase;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,14 +17,25 @@ public class CitiesController {
     }
 
     @GetMapping
-    public ResponseEntity<FindCitiesOutput> getAllCities() throws InterruptedException {
+    public ResponseEntity<FindCitiesResult> getAllCities() throws InterruptedException {
         Thread.sleep(1000);
 
         FindCitiesInput input = new FindCitiesInput();
 
-        FindCitiesOutput cities = findCityUseCase.execute(input);
+        FindCitiesResult result = findCityUseCase.execute(input);
 
-        return ResponseEntity.ok(cities);
+        if (result.isSuccess()) {
+            return ResponseEntity.ok(result);
+        } else {
+            // Map different error codes to appropriate HTTP status codes
+            HttpStatus status = switch (result.getReturnCode()) {
+                case "NOT_FOUND" -> HttpStatus.NOT_FOUND;
+                case "VALIDATION_ERROR" -> HttpStatus.BAD_REQUEST;
+                case "INTERNAL_ERROR" -> HttpStatus.INTERNAL_SERVER_ERROR;
+                default -> HttpStatus.INTERNAL_SERVER_ERROR;
+            };
+            return ResponseEntity.status(status).body(result);
+        }
     }
 
 }
