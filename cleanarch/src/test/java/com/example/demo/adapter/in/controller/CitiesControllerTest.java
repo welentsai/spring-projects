@@ -1,9 +1,8 @@
 package com.example.demo.adapter.in.controller;
 
-import com.example.demo.domain.model.City;
-import com.example.demo.usecase.ports.in.FindCitiesInput;
-import com.example.demo.usecase.ports.in.FindCitiesOutput;
+import com.example.demo.usecase.ports.in.FindCitiesResult;
 import com.example.demo.usecase.ports.in.FindCitiesUseCase;
+import com.example.demo.usecase.ports.in.dto.CityDto;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,19 +26,18 @@ public class CitiesControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private FindCitiesUseCase findCitiesUseCase;
+    FindCitiesUseCase findCitiesUseCase;
 
     @Test
     public void testFindCities_should_return_city_list() throws Exception {
-        List<City> cities = List.of(
-                new City("1", "A", "TW"),
-                new City("2", "B", "USA")
+        List<CityDto> cityDtos = List.of(
+                new CityDto("1", "A", "TW"),
+                new CityDto("2", "B", "USA")
         );
 
-        FindCitiesInput input = new FindCitiesInput();
-        FindCitiesOutput output = new FindCitiesOutput(cities);
+        FindCitiesResult successResult = FindCitiesResult.success(cityDtos);
 
-        when(findCitiesUseCase.execute(any())).thenReturn(output);
+        when(findCitiesUseCase.execute(any())).thenReturn(successResult);
 
         MvcResult result = mockMvc.perform(get("/api/v1/cities")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -48,10 +46,26 @@ public class CitiesControllerTest {
 
         String responseBody = result.getResponse().getContentAsString();
 
-        String expectedResp = "{\"cities\":[{\"id\":\"1\",\"name\":\"A\",\"country\":\"TW\"},{\"id\":\"2\",\"name\":\"B\",\"country\":\"USA\"}]}";
+        String expectedResp = "{\"returnCode\":\"SUCCESS\",\"errorMessage\":null,\"data\":[{\"id\":\"1\",\"name\":\"A\",\"country\":\"TW\"},{\"id\":\"2\",\"name\":\"B\",\"country\":\"USA\"}],\"cities\":[{\"id\":\"1\",\"name\":\"A\",\"country\":\"TW\"},{\"id\":\"2\",\"name\":\"B\",\"country\":\"USA\"}],\"failure\":false,\"success\":true}";
 
         Assertions.assertEquals(expectedResp, responseBody);
     }
 
+    @Test
+    public void testFindCities_should_return_error_when_failure() throws Exception {
+        FindCitiesResult failureResult = FindCitiesResult.failure("INTERNAL_ERROR", "Database connection failed");
+
+        when(findCitiesUseCase.execute(any())).thenReturn(failureResult);
+
+        MvcResult result = mockMvc.perform(get("/api/v1/cities")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError())
+                .andReturn();
+
+        String responseBody = result.getResponse().getContentAsString();
+
+        String expectedResp = "{\"returnCode\":\"INTERNAL_ERROR\",\"errorMessage\":\"Database connection failed\",\"data\":null,\"cities\":null,\"failure\":true,\"success\":false}";
+        Assertions.assertEquals(expectedResp, responseBody);
+    }
 
 }
