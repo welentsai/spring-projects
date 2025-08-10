@@ -1,6 +1,6 @@
 package com.example.demo.adapter.in.controller;
 
-import com.example.demo.usecase.ports.in.FindCitiesResult;
+import com.example.demo.usecase.ports.in.FindCitiesOutput;
 import com.example.demo.usecase.ports.in.FindCitiesUseCase;
 import com.example.demo.usecase.ports.in.dto.CityDto;
 import org.junit.jupiter.api.Assertions;
@@ -35,7 +35,7 @@ public class CitiesControllerTest {
                 new CityDto("2", "B", "USA")
         );
 
-        FindCitiesResult successResult = FindCitiesResult.success(cityDtos);
+        FindCitiesOutput successResult = FindCitiesOutput.success(cityDtos);
 
         when(findCitiesUseCase.execute(any())).thenReturn(successResult);
 
@@ -53,7 +53,7 @@ public class CitiesControllerTest {
 
     @Test
     public void testFindCities_should_return_error_when_failure() throws Exception {
-        FindCitiesResult failureResult = FindCitiesResult.failure("INTERNAL_ERROR", "Database connection failed");
+        FindCitiesOutput failureResult = FindCitiesOutput.failure("INTERNAL_ERROR", "Database connection failed");
 
         when(findCitiesUseCase.execute(any())).thenReturn(failureResult);
 

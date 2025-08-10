@@ -1,7 +1,7 @@
 package com.example.demo.adapter.in.controller;
 
 import com.example.demo.usecase.ports.in.FindCitiesInput;
-import com.example.demo.usecase.ports.in.FindCitiesResult;
+import com.example.demo.usecase.ports.in.FindCitiesOutput;
 import com.example.demo.usecase.ports.in.FindCitiesUseCase;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,12 +17,12 @@ public class CitiesController {
     }
 
     @GetMapping
-    public ResponseEntity<FindCitiesResult> getAllCities() throws InterruptedException {
+    public ResponseEntity<FindCitiesOutput> getAllCities() throws InterruptedException {
         Thread.sleep(1000);
 
         FindCitiesInput input = new FindCitiesInput();
 
-        FindCitiesResult result = findCityUseCase.execute(input);
+        FindCitiesOutput result = findCityUseCase.execute(input);
 
         if (result.isSuccess()) {
             return ResponseEntity.ok(result);
