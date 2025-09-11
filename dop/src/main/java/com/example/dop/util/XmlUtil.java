@@ -20,6 +20,8 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,6 +38,14 @@ public class XmlUtil {
         xmlMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 
+    /**
+     * Extract multiple nodes and convert to list of objects
+     *
+     * @param xmlDoc    the XML document as string
+     * @param xpathExpr XPath expression to find nodes
+     * @param clazz     target class type
+     * @return List of objects
+     */
     public static <T> List<T> extractNodes(String xmlDoc, String xpathExpr, Class<T> clazz) throws Exception {
         Document doc = DocumentBuilderFactory.newInstance()
                 .newDocumentBuilder()
@@ -51,11 +61,124 @@ public class XmlUtil {
         return results;
     }
 
+    /**
+     * Extract single node and convert to object
+     *
+     * @param xmlDoc    the XML document as string
+     * @param xpathExpr XPath expression to find single node
+     * @param clazz     target class type
+     * @return Single object or null if not found
+     */
+    public static <T> T extractNode(String xmlDoc, String xpathExpr, Class<T> clazz) throws Exception {
+        Document doc = DocumentBuilderFactory.newInstance()
+                .newDocumentBuilder()
+                .parse(new ByteArrayInputStream(xmlDoc.getBytes()));
+
+        Node node = (Node) xpath.evaluate(xpathExpr, doc, XPathConstants.NODE);
+
+        if (node == null) {
+            return null;
+        }
+
+        String nodeXml = nodeToString(node);
+        return xmlMapper.readValue(nodeXml, clazz);
+    }
+
+    /**
+     * Extract single element value and convert to specified Java type
+     *
+     * @param xmlDoc     the XML document as string
+     * @param xpathExpr  XPath expression to find element
+     * @param targetType target Java type
+     * @return Converted value or null if not found
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> T extractElement(String xmlDoc, String xpathExpr, Class<T> targetType) throws Exception {
+        Document doc = DocumentBuilderFactory.newInstance()
+                .newDocumentBuilder()
+                .parse(new ByteArrayInputStream(xmlDoc.getBytes()));
+
+        String value = (String) xpath.evaluate(xpathExpr, doc, XPathConstants.STRING);
+
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+
+        return convertToType(value.trim(), targetType);
+    }
+
+    /**
+     * Extract multiple element values and convert to specified Java type
+     *
+     * @param xmlDoc     the XML document as string
+     * @param xpathExpr  XPath expression to find elements
+     * @param targetType target Java type
+     * @return List of converted values
+     */
+    public static <T> List<T> extractElements(String xmlDoc, String xpathExpr, Class<T> targetType) throws Exception {
+        Document doc = DocumentBuilderFactory.newInstance()
+                .newDocumentBuilder()
+                .parse(new ByteArrayInputStream(xmlDoc.getBytes()));
+
+        NodeList nodes = (NodeList) xpath.evaluate(xpathExpr, doc, XPathConstants.NODESET);
+
+        List<T> results = new ArrayList<>();
+        for (int i = 0; i < nodes.getLength(); i++) {
+            String value = nodes.item(i).getTextContent();
+            if (value != null && !value.trim().isEmpty()) {
+                T convertedValue = convertToType(value.trim(), targetType);
+                if (convertedValue != null) {
+                    results.add(convertedValue);
+                }
+            }
+        }
+        return results;
+    }
+
+    /**
+     * Convert string value to target type
+     */
+    @SuppressWarnings("unchecked")
+    private static <T> T convertToType(String value, Class<T> targetType) throws Exception {
+        if (targetType == String.class) {
+            return (T) value;
+        } else if (targetType == Integer.class || targetType == int.class) {
+            return (T) Integer.valueOf(value);
+        } else if (targetType == Long.class || targetType == long.class) {
+            return (T) Long.valueOf(value);
+        } else if (targetType == Double.class || targetType == double.class) {
+            return (T) Double.valueOf(value);
+        } else if (targetType == Float.class || targetType == float.class) {
+            return (T) Float.valueOf(value);
+        } else if (targetType == Boolean.class || targetType == boolean.class) {
+            return (T) Boolean.valueOf(value);
+        } else if (targetType == LocalDate.class) {
+            return (T) LocalDate.parse(value);
+        } else if (targetType == LocalDateTime.class) {
+            return (T) LocalDateTime.parse(value);
+        } else {
+            // For other types, try to use Jackson for conversion
+            return xmlMapper.readValue("\"" + value + "\"", targetType);
+        }
+    }
+
     private static String nodeToString(Node node) throws Exception {
         StringWriter writer = new StringWriter();
         Transformer transformer = TransformerFactory.newInstance().newTransformer();
         transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
         transformer.transform(new DOMSource(node), new StreamResult(writer));
         return writer.toString();
+    }
+
+    /**
+     * Check if XPath expression matches any nodes
+     */
+    public static boolean exists(String xmlDoc, String xpathExpr) throws Exception {
+        Document doc = DocumentBuilderFactory.newInstance()
+                .newDocumentBuilder()
+                .parse(new ByteArrayInputStream(xmlDoc.getBytes()));
+
+        NodeList nodes = (NodeList) xpath.evaluate(xpathExpr, doc, XPathConstants.NODESET);
+        return nodes.getLength() > 0;
     }
 }

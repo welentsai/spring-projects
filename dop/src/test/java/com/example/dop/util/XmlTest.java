@@ -5,6 +5,7 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public class XmlTest {
@@ -36,6 +37,29 @@ public class XmlTest {
         String sampleXml = getLargeXmlString();
         List<Order> allOrders = XmlUtil.extractNodes(sampleXml, "//order", Order.class);
         System.out.println(allOrders);
+
+        Order order = XmlUtil.extractNode(sampleXml, "//order[@id='O001']", Order.class);
+        System.out.println(order);
+
+        // Get order total as Double
+        Double total = XmlUtil.extractElement(sampleXml, "//order[@id='O001']/total", Double.class);
+        System.out.println(total);
+
+        // Get employee name as String
+        String name = XmlUtil.extractElement(sampleXml, "//employee[@id='E001']/name", String.class);
+        System.out.println(name);
+
+        // Get birth date as LocalDate
+        LocalDate birthDate = XmlUtil.extractElement(sampleXml, "//employee[@id='E001']/birthDate", LocalDate.class);
+        System.out.println(birthDate);
+
+        // Get all employee names
+        List<String> names = XmlUtil.extractElements(sampleXml, "//employee/name", String.class);
+        System.out.println(names);
+
+        // Get all product prices
+        List<Double> prices = XmlUtil.extractElements(sampleXml, "//product/price", Double.class);
+        System.out.println(prices);
     }
 
     private String getLargeXmlString() {
