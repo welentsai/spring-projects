@@ -62,6 +62,39 @@ public class XmlTest {
         System.out.println(prices);
     }
 
+    @Test
+    void test_convert_to_xml() {
+        String sampleXml = getLargeXmlString();
+        // convert a order to xml string
+        XmlUtil.extractNode(sampleXml, "//order[@id='O001']", Order.class)
+                .map(XmlUtil::objectToXml)
+                .ifPresent(System.out::println);
+    }
+
+    @Test
+    void test_convert_to_employee() {
+        String sampleXml = getLargeXmlString();
+
+        XmlUtil.extractNode(sampleXml, "//employee[@id='E001']", Employee.class)
+                .ifPresent(System.out::println);
+
+        XmlUtil.extractNode(sampleXml, "//employee[@id='E001']", Employee.class)
+                .map(XmlUtil::objectToXml)
+                .ifPresent(System.out::println);
+
+    }
+
+    @Test
+    void test_convert_to_employees() throws Exception {
+        String sampleXml = getLargeXmlString();
+
+        var employees = XmlUtil.extractNodes(sampleXml, "//employee", Employee.class);
+        System.out.println(employees);
+
+        var xmlStr = XmlUtil.objectToXml(employees);
+        System.out.println(xmlStr);
+    }
+
     private String getLargeXmlString() {
         return """
                 <company>
