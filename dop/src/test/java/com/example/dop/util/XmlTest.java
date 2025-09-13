@@ -8,6 +8,8 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDate;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 public class XmlTest {
 
     @Test
@@ -88,11 +90,47 @@ public class XmlTest {
     void test_convert_to_employees() throws Exception {
         String sampleXml = getLargeXmlString();
 
-        var employees = XmlUtil.extractNodes(sampleXml, "//employee", Employee.class);
-        System.out.println(employees);
+        var employeeList = XmlUtil.extractNodes(sampleXml, "//employee", Employee.class);
+        var employees = new Employees(employeeList);
 
-        var xmlStr = XmlUtil.objectToXml(employees);
-        System.out.println(xmlStr);
+        var actualXmlOptional = XmlUtil.objectToXml(employees);
+
+        System.out.println(actualXmlOptional);
+
+        String expectedXml = """
+                <employees>
+                  <employee id="E001">
+                    <name>John Smith</name>
+                    <department>Engineering</department>
+                    <salary>75000.0</salary>
+                    <position>Software Engineer</position>
+                    <manager>Jane Doe</manager>
+                  </employee>
+                  <employee id="E002">
+                    <name>Jane Doe</name>
+                    <department>Engineering</department>
+                    <salary>95000.0</salary>
+                    <position>Senior Engineer</position>
+                    <manager>Bob Wilson</manager>
+                  </employee>
+                  <employee id="E003">
+                    <name>Alice Johnson</name>
+                    <department>Marketing</department>
+                    <salary>65000.0</salary>
+                    <position>Marketing Manager</position>
+                    <manager>Carol Brown</manager>
+                  </employee>
+                  <employee id="E004">
+                    <name>Bob Wilson</name>
+                    <department>Engineering</department>
+                    <salary>120000.0</salary>
+                    <position>Engineering Manager</position>
+                    <manager>CEO</manager>
+                  </employee>
+                </employees>""";
+
+        // Assert that the XML conversion was successful and matches expected output
+        assertEquals(expectedXml.trim(), actualXmlOptional.orElse("").trim());
     }
 
     private String getLargeXmlString() {
