@@ -38,20 +38,20 @@ public class XmlTest {
         List<Order> allOrders = XmlUtil.extractNodes(sampleXml, "//order", Order.class);
         System.out.println(allOrders);
 
-        Order order = XmlUtil.extractNode(sampleXml, "//order[@id='O001']", Order.class);
-        System.out.println(order);
+        XmlUtil.extractNode(sampleXml, "//order[@id='O001']", Order.class)
+                .ifPresent(System.out::println);
 
         // Get order total as Double
-        Double total = XmlUtil.extractElement(sampleXml, "//order[@id='O001']/total", Double.class);
-        System.out.println(total);
+        XmlUtil.extractElement(sampleXml, "//order[@id='O001']/total", Double.class)
+                .ifPresent(System.out::println);
 
         // Get employee name as String
-        String name = XmlUtil.extractElement(sampleXml, "//employee[@id='E001']/name", String.class);
-        System.out.println(name);
+        XmlUtil.extractElement(sampleXml, "//employee[@id='E001']/name", String.class)
+                .ifPresent(System.out::println);
 
         // Get birth date as LocalDate
-        LocalDate birthDate = XmlUtil.extractElement(sampleXml, "//employee[@id='E001']/birthDate", LocalDate.class);
-        System.out.println(birthDate);
+        XmlUtil.extractElement(sampleXml, "//employee[@id='E001']/birthDate", LocalDate.class)
+                .ifPresent(System.out::println);
 
         // Get all employee names
         List<String> names = XmlUtil.extractElements(sampleXml, "//employee/name", String.class);

@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -24,8 +26,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class XmlUtil {
+    private static final Logger logger = LoggerFactory.getLogger(XmlUtil.class);
+
     private static final XmlMapper xmlMapper;
     private static final XPath xpath = XPathFactory.newInstance().newXPath();
 
@@ -36,6 +41,8 @@ public class XmlUtil {
         xmlMapper.registerModule(new JavaTimeModule());
         xmlMapper.enable(SerializationFeature.INDENT_OUTPUT);
         xmlMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        xmlMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        xmlMapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
     }
 
     /**
@@ -67,44 +74,28 @@ public class XmlUtil {
      * @param xmlDoc    the XML document as string
      * @param xpathExpr XPath expression to find single node
      * @param clazz     target class type
-     * @return Single object or null if not found
+     * @return Optional containing converted value, empty if not found or error occurs
      */
-    public static <T> T extractNode(String xmlDoc, String xpathExpr, Class<T> clazz) throws Exception {
-        Document doc = DocumentBuilderFactory.newInstance()
-                .newDocumentBuilder()
-                .parse(new ByteArrayInputStream(xmlDoc.getBytes()));
+    public static <T> Optional<T> extractNode(String xmlDoc, String xpathExpr, Class<T> clazz) {
+        try {
+            Document doc = DocumentBuilderFactory.newInstance()
+                    .newDocumentBuilder()
+                    .parse(new ByteArrayInputStream(xmlDoc.getBytes()));
 
-        Node node = (Node) xpath.evaluate(xpathExpr, doc, XPathConstants.NODE);
+            Node node = (Node) xpath.evaluate(xpathExpr, doc, XPathConstants.NODE);
 
-        if (node == null) {
-            return null;
+            if (node == null) {
+                return Optional.empty();
+            }
+
+            String nodeXml = nodeToString(node);
+            T result = xmlMapper.readValue(nodeXml, clazz);
+            return Optional.of(result);
+
+        } catch (Exception e) {
+            logger.warn("Failed to extract node with XPath: " + xpathExpr, e);
+            return Optional.empty();
         }
-
-        String nodeXml = nodeToString(node);
-        return xmlMapper.readValue(nodeXml, clazz);
-    }
-
-    /**
-     * Extract single element value and convert to specified Java type
-     *
-     * @param xmlDoc     the XML document as string
-     * @param xpathExpr  XPath expression to find element
-     * @param targetType target Java type
-     * @return Converted value or null if not found
-     */
-    @SuppressWarnings("unchecked")
-    public static <T> T extractElement(String xmlDoc, String xpathExpr, Class<T> targetType) throws Exception {
-        Document doc = DocumentBuilderFactory.newInstance()
-                .newDocumentBuilder()
-                .parse(new ByteArrayInputStream(xmlDoc.getBytes()));
-
-        String value = (String) xpath.evaluate(xpathExpr, doc, XPathConstants.STRING);
-
-        if (value == null || value.trim().isEmpty()) {
-            return null;
-        }
-
-        return convertToType(value.trim(), targetType);
     }
 
     /**
@@ -133,6 +124,36 @@ public class XmlUtil {
             }
         }
         return results;
+    }
+
+    /**
+     * Extract single element value and convert to specified Java type
+     *
+     * @param xmlDoc     the XML document as string
+     * @param xpathExpr  XPath expression to find element
+     * @param targetType target Java type
+     * @return Optional containing converted value, empty if not found or error occurs
+     */
+    public static <T> Optional<T> extractElement(String xmlDoc, String xpathExpr, Class<T> targetType) {
+        try {
+            Document doc = DocumentBuilderFactory.newInstance()
+                    .newDocumentBuilder()
+                    .parse(new ByteArrayInputStream(xmlDoc.getBytes()));
+
+            String value = (String) xpath.evaluate(xpathExpr, doc, XPathConstants.STRING);
+
+            if (value == null || value.trim().isEmpty()) {
+                return Optional.empty();
+            }
+
+            T convertedValue = convertToType(value.trim(), targetType);
+            return Optional.of(convertedValue);
+
+        } catch (Exception e) {
+            // Log the exception if needed
+            // logger.warn("Failed to extract element with XPath: " + xpathExpr, e);
+            return Optional.empty();
+        }
     }
 
     /**
