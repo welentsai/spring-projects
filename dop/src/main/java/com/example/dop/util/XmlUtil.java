@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public class XmlUtil {
     private static final Logger logger = LoggerFactory.getLogger(XmlUtil.class);
@@ -44,6 +45,10 @@ public class XmlUtil {
         xmlMapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
         xmlMapper.configure(DeserializationFeature.UNWRAP_ROOT_VALUE, false);
         xmlMapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
+    }
+
+    public static void register(Consumer<XmlMapper> consumer) {
+        consumer.accept(xmlMapper);
     }
 
     /**

@@ -2,6 +2,7 @@ package com.example.dop.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,11 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class XmlTest {
+
+    @Test
+    void test_register() {
+        XmlUtil.register(xmlMapper -> xmlMapper.registerModule(new JavaTimeModule()));
+    }
 
     @Test
     void test_success() throws JsonProcessingException {
