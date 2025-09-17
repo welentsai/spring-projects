@@ -32,16 +32,16 @@ public class RetryableRestClientTest {
     @BeforeEach
     public void setUp() {
         System.out.println("Setup wiremock server !");
-        //        wireMockServer =
-        //                new WireMockServer(
-        //                        wireMockConfig()
-        //                                .port(8090)
-        //                                .usingFilesUnderClasspath("src/test/resources/wiremock"));
-        //        wireMockServer.start();
+        wireMockServer =
+                new WireMockServer(
+                        wireMockConfig()
+                                .port(8090)
+                                .usingFilesUnderClasspath("src/test/resources/wiremock"));
+        wireMockServer.start();
 
         // --- set up for retryable rest client --
-        String baseUrl = "https://hn.algolia.com";
-        //        String baseUrl = "http://localhost:" + wireMockServer.port();
+        //        String baseUrl = "https://hn.algolia.com";
+        String baseUrl = "http://localhost:" + wireMockServer.port();
         RestClient restClient = getRestClient(baseUrl);
         Retry retry = getRetry();
         CircuitBreaker circuitBreaker = getCircuitBreaker();
@@ -53,7 +53,7 @@ public class RetryableRestClientTest {
 
     @AfterEach
     public void teardown() {
-        //        wireMockServer.stop();
+        wireMockServer.stop();
     }
 
     @Test
@@ -62,13 +62,13 @@ public class RetryableRestClientTest {
         // Simple query parameters
         QueryParams params1 = QueryParams.builder().add("query", "react").build();
 
-        //        wireMockServer.stubFor(
-        //                get(urlEqualTo(uri))
-        //                        .willReturn(
-        //                                aResponse()
-        //                                        .withHeader("Content-Type", "text/plain")
-        //                                        .withStatus(200)
-        //                                        .withBodyFile("get_react_success.json")));
+        wireMockServer.stubFor(
+                get(urlEqualTo(uri))
+                        .willReturn(
+                                aResponse()
+                                        .withHeader("Content-Type", "text/plain")
+                                        .withStatus(200)
+                                        .withBodyFile("get_react_success.json")));
 
         String resp = retryableRestClient.get(uri, String.class, params1);
 
