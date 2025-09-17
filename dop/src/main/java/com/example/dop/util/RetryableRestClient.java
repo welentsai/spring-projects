@@ -1,5 +1,6 @@
 package com.example.dop.util;
 
+import com.example.dop.util.exception.RetryableRestClientException;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.timelimiter.TimeLimiter;
@@ -10,10 +11,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -25,7 +23,6 @@ public class RetryableRestClient {
     private final Retry retry;
     private final CircuitBreaker circuitBreaker;
     private final TimeLimiter timeLimiter;
-    private final ScheduledExecutorService scheduler;
 
     public RetryableRestClient(
             RestClient restClient,
@@ -37,7 +34,6 @@ public class RetryableRestClient {
         this.retry = retry;
         this.circuitBreaker = circuitBreaker;
         this.timeLimiter = timeLimiter;
-        this.scheduler = Executors.newScheduledThreadPool(10);
 
         registerEventListeners(retry);
     }
@@ -50,7 +46,7 @@ public class RetryableRestClient {
     public <T> T get(String uri, Class<T> responseType, Object... uriVariables) {
         return executeWithResilience(
                 () -> {
-                    logger.debug("Making GET request to: {}", uri);
+                    logger.info("Making GET request to: {}", uri);
                     return restClient.get().uri(uri, uriVariables).retrieve().body(responseType);
                 },
                 "GET-" + uri.replaceAll("[{}]", ""));
@@ -134,17 +130,18 @@ public class RetryableRestClient {
         Supplier<CompletableFuture<T>> futureSupplier =
                 () -> CompletableFuture.supplyAsync(decoratedSupplier);
 
-        Supplier<CompletionStage<T>> decoratedFutureSupplier =
-                TimeLimiter.decorateCompletionStage(timeLimiter, scheduler, futureSupplier);
+        Callable<T> decoratedCallable =
+                TimeLimiter.decorateFutureSupplier(timeLimiter, futureSupplier);
 
         try {
-            return decoratedFutureSupplier.get().toCompletableFuture().join();
+            return decoratedCallable.call();
         } catch (Exception e) {
-            logger.error(
-                    "Operation {} failed after applying all resilience patterns: {}",
-                    operationName,
-                    e.getMessage());
-            throw e;
+            String errorMsg =
+                    String.format(
+                            "Operation %s failed after applying all resilience patterns: %s",
+                            operationName, e.getMessage());
+            logger.error(errorMsg);
+            throw new RetryableRestClientException(errorMsg, e);
         }
     }
 
