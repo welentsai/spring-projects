@@ -237,6 +237,106 @@ public class RetryableRestClientTest {
         wireMockServer.verify(3, getRequestedFor(urlEqualTo(uri)));
     }
 
+    @Test
+    public void test_getWithErrorHandler_success() throws JsonProcessingException {
+        String uri = "/api/v1/search";
+        QueryParams params = QueryParams.builder().add("query", "react").build();
+
+        // Mock successful response
+        wireMockServer.stubFor(
+                get(urlEqualTo(uri))
+                        .willReturn(
+                                aResponse()
+                                        .withHeader("Content-Type", "text/plain")
+                                        .withStatus(200)
+                                        .withBodyFile("get_react_success.json")));
+
+        // Error handler should not be called for successful requests
+        String resp = retryableRestClient.getWithErrorHandler(
+                uri, 
+                String.class, 
+                statusCode -> "Error handled: " + statusCode.value(),
+                params);
+
+        ReactHackerNews hackerNews = JsonUtils.fromJson(resp, ReactHackerNews.class);
+        Assertions.assertEquals(20, hackerNews.hitsPerPage());
+        Assertions.assertEquals("advancedSyntax=true&analyticsTags=backend", hackerNews.params());
+
+        // Verify only 1 request was made
+        wireMockServer.verify(1, getRequestedFor(urlEqualTo(uri)));
+    }
+
+    @Test
+    public void test_getWithErrorHandler_4xx_handled() {
+        String uri = "/api/v1/search";
+        QueryParams params = QueryParams.builder().add("query", "react").build();
+
+        // Mock 404 Not Found response
+        wireMockServer.stubFor(
+                get(urlEqualTo(uri))
+                        .willReturn(aResponse().withStatus(404).withBody("Not Found")));
+
+        // Error handler should be called and return fallback response
+        String resp = retryableRestClient.getWithErrorHandler(
+                uri,
+                String.class,
+                statusCode -> "Fallback response for status: " + statusCode.value(),
+                params);
+
+        Assertions.assertEquals("Fallback response for status: 404", resp);
+
+        // Verify only 1 request was made (no retries for 4xx with handler)
+        wireMockServer.verify(1, getRequestedFor(urlEqualTo(uri)));
+    }
+
+    @Test
+    public void test_getWithErrorHandler_4xx_no_handler() {
+        String uri = "/api/v1/search";
+        QueryParams params = QueryParams.builder().add("query", "react").build();
+
+        // Mock 400 Bad Request response
+        wireMockServer.stubFor(
+                get(urlEqualTo(uri))
+                        .willReturn(aResponse().withStatus(400).withBody("Bad Request")));
+
+        // No error handler provided (null), should throw exception
+        RetryableRestClientException exception = Assertions.assertThrows(
+                RetryableRestClientException.class,
+                () -> retryableRestClient.getWithErrorHandler(uri, String.class, null, params));
+
+        Assertions.assertTrue(
+                exception.getMessage().contains("failed after applying all resilience patterns"));
+
+        // Verify only 1 request was made (no retries for 4xx errors)
+        wireMockServer.verify(1, getRequestedFor(urlEqualTo(uri)));
+    }
+
+    @Test
+    public void test_getWithErrorHandler_5xx_error() {
+        String uri = "/api/v1/search";
+        QueryParams params = QueryParams.builder().add("query", "react").build();
+
+        // Mock 500 Internal Server Error response
+        wireMockServer.stubFor(
+                get(urlEqualTo(uri))
+                        .willReturn(aResponse().withStatus(500).withBody("Internal Server Error")));
+
+        // Error handler should NOT be called for 5xx errors, should follow normal retry logic
+        RetryableRestClientException exception = Assertions.assertThrows(
+                RetryableRestClientException.class,
+                () -> retryableRestClient.getWithErrorHandler(
+                        uri,
+                        String.class,
+                        statusCode -> "This should not be called for 5xx",
+                        params));
+
+        Assertions.assertTrue(
+                exception.getMessage().contains("failed after applying all resilience patterns"));
+
+        // Verify 3 requests were made (initial + 2 retries for 5xx errors)
+        wireMockServer.verify(3, getRequestedFor(urlEqualTo(uri)));
+    }
+
     private TimeLimiter getTimeLimiter() {
         TimeLimiterConfig config =
                 TimeLimiterConfig.custom().timeoutDuration(Duration.ofMillis(30000)).build();
@@ -272,6 +372,112 @@ public class RetryableRestClientTest {
                         .build();
 
         return CircuitBreaker.of("api-circuit-breaker", config);
+    }
+
+    @Test
+    public void test_post_success() throws JsonProcessingException {
+        String uri = "/api/v1/posts";
+        String requestBody = "{\"title\":\"Test Post\",\"content\":\"This is a test post\"}";
+
+        wireMockServer.stubFor(
+                post(urlEqualTo(uri))
+                        .willReturn(
+                                aResponse()
+                                        .withHeader("Content-Type", "application/json")
+                                        .withStatus(200)
+                                        .withBody("{\"id\":1,\"title\":\"Test Post\",\"content\":\"This is a test post\",\"status\":\"created\"}")));
+
+        String resp = retryableRestClient.post(uri, requestBody, String.class);
+
+        Assertions.assertTrue(resp.contains("\"id\":1"));
+        Assertions.assertTrue(resp.contains("\"status\":\"created\""));
+
+        // Verify only 1 request was made (no retries needed)
+        wireMockServer.verify(1, postRequestedFor(urlEqualTo(uri)));
+    }
+
+    @Test
+    public void test_post_with_retry_success() throws JsonProcessingException {
+        String uri = "/api/v1/posts";
+        String requestBody = "{\"title\":\"Test Post\",\"content\":\"This is a test post\"}";
+
+        // Set up scenario: fail twice, succeed on third attempt
+        wireMockServer.stubFor(
+                post(urlEqualTo(uri))
+                        .inScenario("POST Retry Success")
+                        .whenScenarioStateIs(STARTED)
+                        .willReturn(aResponse().withStatus(500).withBody("Internal Server Error"))
+                        .willSetStateTo("First Retry"));
+
+        wireMockServer.stubFor(
+                post(urlEqualTo(uri))
+                        .inScenario("POST Retry Success")
+                        .whenScenarioStateIs("First Retry")
+                        .willReturn(aResponse().withStatus(500).withBody("Internal Server Error"))
+                        .willSetStateTo("Second Retry"));
+
+        wireMockServer.stubFor(
+                post(urlEqualTo(uri))
+                        .inScenario("POST Retry Success")
+                        .whenScenarioStateIs("Second Retry")
+                        .willReturn(
+                                aResponse()
+                                        .withHeader("Content-Type", "application/json")
+                                        .withStatus(200)
+                                        .withBody("{\"id\":1,\"title\":\"Test Post\",\"content\":\"This is a test post\",\"status\":\"created\"}")));
+
+        String resp = retryableRestClient.post(uri, requestBody, String.class);
+
+        Assertions.assertTrue(resp.contains("\"id\":1"));
+        Assertions.assertTrue(resp.contains("\"status\":\"created\""));
+
+        // Verify 3 requests were made (initial + 2 retries)
+        wireMockServer.verify(3, postRequestedFor(urlEqualTo(uri)));
+    }
+
+    @Test
+    public void test_post_with_retry_failure() {
+        String uri = "/api/v1/posts";
+        String requestBody = "{\"title\":\"Test Post\",\"content\":\"This is a test post\"}";
+
+        // All attempts return 500 error
+        wireMockServer.stubFor(
+                post(urlEqualTo(uri))
+                        .willReturn(aResponse().withStatus(500).withBody("Internal Server Error")));
+
+        RetryableRestClientException exception =
+                Assertions.assertThrows(
+                        RetryableRestClientException.class,
+                        () -> retryableRestClient.post(uri, requestBody, String.class));
+
+        Assertions.assertTrue(
+                exception.getMessage().contains("failed after applying all resilience patterns"));
+
+        // Verify 3 requests were made (initial + 2 retries)
+        wireMockServer.verify(3, postRequestedFor(urlEqualTo(uri)));
+    }
+
+    @Test
+    public void test_post_with_timeout() {
+        String uri = "/api/v1/posts";
+        String requestBody = "{\"title\":\"Test Post\",\"content\":\"This is a test post\"}";
+
+        // Response takes longer than 30 second timeout
+        wireMockServer.stubFor(
+                post(urlEqualTo(uri))
+                        .willReturn(
+                                aResponse()
+                                        .withStatus(200)
+                                        .withFixedDelay(35000) // 35 seconds > 30 second timeout
+                                        .withBody("{\"id\":1,\"title\":\"Test Post\",\"content\":\"This is a test post\",\"status\":\"created\"}")));
+
+        RetryableRestClientException exception =
+                Assertions.assertThrows(
+                        RetryableRestClientException.class,
+                        () -> retryableRestClient.post(uri, requestBody, String.class));
+
+        Assertions.assertTrue(
+                exception.getMessage().contains("failed after applying all resilience patterns"));
     }
 
     private Retry getRetry() {
