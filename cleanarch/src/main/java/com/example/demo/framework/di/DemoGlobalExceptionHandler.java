@@ -1,6 +1,6 @@
 package com.example.demo.framework.di;
 
-import com.example.demo2.usecase.exception.UserNotFoundException;
+import com.example.demo.usecase.exception.UserNotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;

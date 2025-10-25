@@ -1,4 +1,4 @@
-package com.example.demo2.usecase.exception;
+package com.example.demo.usecase.exception;
 
 public class UserNotFoundException extends RuntimeException {
 
