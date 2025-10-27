@@ -7,6 +7,7 @@ import io.github.resilience4j.timelimiter.TimeLimiter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
@@ -52,6 +53,16 @@ public class RetryableRestClient {
                 "GET-" + uri.replaceAll("[{}]", ""));
     }
 
+    public <R> R get(
+            String uri, ParameterizedTypeReference<R> responseType, Object... uriVariables) {
+        return executeWithResilience(
+                () -> {
+                    logger.debug("Making GET request to: {}", uri);
+                    return restClient.get().uri(uri, uriVariables).retrieve().body(responseType);
+                },
+                "GET-" + uri.replaceAll("[{}]", ""));
+    }
+
     // GET with custom error handling
     public <T> T getWithErrorHandler(
             String uri,
@@ -81,6 +92,25 @@ public class RetryableRestClient {
 
     // POST with resilience patterns
     public <T, R> R post(String uri, T requestBody, Class<R> responseType, Object... uriVariables) {
+        return executeWithResilience(
+                () -> {
+                    logger.debug("Making POST request to: {}", uri);
+                    return restClient
+                            .post()
+                            .uri(uri, uriVariables)
+                            .body(requestBody)
+                            .retrieve()
+                            .body(responseType);
+                },
+                "POST-" + uri.replaceAll("[{}]", ""));
+    }
+
+    public <T, R> R post(
+            String uri,
+            T requestBody,
+            ParameterizedTypeReference<R> responseType,
+            Object... uriVariables) {
+
         return executeWithResilience(
                 () -> {
                     logger.debug("Making POST request to: {}", uri);
