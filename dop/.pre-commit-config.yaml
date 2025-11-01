@@ -17,12 +17,12 @@ repos:
       - id: mixed-line-ending
         args: ['--fix=lf']
 
-  # Java formatting using google-java-format
+  # Java formatting using google-java-format with AOSP style
   - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
     rev: v2.12.0
     hooks:
       - id: pretty-format-java
-        args: [--autofix]
+        args: [--autofix, --aosp]
 
   # Maven wrapper validation
   - repo: local

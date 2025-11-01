@@ -58,13 +58,13 @@ For each file changed in the commit range, perform detailed analysis:
 # Analyze each changed file
 for file in $(git diff ${COMMIT_HASH}~1..HEAD --name-only); do
     echo "=== Analyzing $file ==="
-    
+
     # Show what changed in this file
     git diff ${COMMIT_HASH}~1..HEAD -- "$file" --stat
-    
+
     # Show detailed changes
     git diff ${COMMIT_HASH}~1..HEAD -- "$file"
-    
+
     # Find which commits modified this file
     git log ${COMMIT_HASH}~1..HEAD --oneline -- "$file"
 done
@@ -88,17 +88,49 @@ See [Test Coverage Analysis](./testcoverageanalysis.md) for detailed test covera
 
 See [Maven/Build Analysis](./mavenanalysis.md) for detailed build configuration review guidelines.
 
-## 7. Generate Review Summary
+## 7. Java 17 Specific Feature Analysis
+
+### Check for Java 17 Feature Adoption Opportunities
+```bash
+# Look for opportunities to use Records instead of POJOs
+grep -r "class.*{" --include="*.java" . | grep -E "(Data|Value|DTO|Entity)"
+
+# Find instanceof patterns that could use pattern matching
+grep -r "instanceof" --include="*.java" . | head -10
+
+# Look for switch statements that could become switch expressions
+grep -r -A 5 "switch.*(" --include="*.java" .
+
+# Find multi-line strings that could use text blocks
+grep -r -B 2 -A 2 "\".*\\\\n" --include="*.java" .
+
+# Check for traditional exception handling that could be improved
+grep -r -A 3 "catch.*Exception" --include="*.java" .
+```
+
+### Java 17 Feature Review Checklist
+- **Records Usage**: Are data carriers implemented as records instead of classes?
+- **Sealed Classes**: Are hierarchies properly controlled with sealed classes?
+- **Pattern Matching**: Is pattern matching used for instanceof checks?
+- **Text Blocks**: Are multi-line strings using text blocks?
+- **Switch Expressions**: Are complex switch statements using expressions?
+- **Local Variable Type Inference**: Is `var` used appropriately?
+- **Stream Enhancements**: Are Java 17 Stream improvements utilized?
+- **Performance**: Are JVM 17 performance improvements leveraged?
+
+## 8. Generate Review Summary
 
 Provide a comprehensive review report with:
 
 1. **Overview**: Brief summary of changes reviewed from the specified commit
-2. **Commit Range Analysis**: Details about the commit range analyzed  
-3. **Positive Aspects**: What was implemented well
-4. **Issues Found**: Categorized by severity (Critical, Major, Minor)
-5. **Recommendations**: Specific actionable improvements
-6. **Code Quality Score**: Overall assessment (Excellent/Good/Fair/Needs Improvement)
-7. **Next Steps**: Suggested actions for improvement
+2. **Commit Range Analysis**: Details about the commit range analyzed
+3. **Java 17 Feature Analysis**: Assessment of modern Java feature adoption
+4. **Spring Boot 3.x Compatibility**: Framework-specific modernization opportunities
+5. **Positive Aspects**: What was implemented well
+6. **Issues Found**: Categorized by severity (Critical, Major, Minor)
+7. **Recommendations**: Specific actionable improvements
+8. **Code Quality Score**: Overall assessment (Excellent/Good/Fair/Needs Improvement)
+9. **Next Steps**: Suggested actions for improvement
 
 </detailed_sequence_of_steps>
 
@@ -127,19 +159,41 @@ Provide a comprehensive review report with:
 - Redundant code
 - Minor performance optimizations
 
-## Spring Boot Specific Checks
+## Spring Boot 3.x with Java 17 Specific Checks
+- **Native Compilation**: Ensure code is compatible with GraalVM native compilation
+- **Jakarta EE Migration**: Verify migration from javax.* to jakarta.* packages
+- **Spring Boot 3.x Features**: Use new observability features, problem details, and improved auto-configuration
+- **Configuration Properties**: Leverage @ConfigurationProperties with records
+- **Virtual Threads**: Consider Virtual Threads (Project Loom) for I/O intensive operations
+- **Reactive Support**: Enhanced WebFlux support with Java 17 features
+- **Security Enhancements**: Utilize Spring Security 6.x features with Java 17
+- **Testing**: Use Spring Boot 3.x testing improvements with Java 17 features
+
+## Traditional Spring Boot Checks
 - Proper use of Spring annotations
 - Configuration properties validation
 - Actuator endpoint security
 - Profile-specific configurations
 - Bean lifecycle management
 
-## Java Best Practices
+## Java 17 Specific Best Practices
+- **Records**: Use records for data carriers instead of traditional POJOs
+- **Sealed Classes**: Leverage sealed classes for controlled inheritance hierarchies
+- **Pattern Matching**: Use pattern matching for instanceof to reduce boilerplate
+- **Text Blocks**: Utilize text blocks for multi-line strings (SQL, JSON, HTML)
+- **Switch Expressions**: Prefer switch expressions over switch statements
+- **Stream API**: Use new Java 17 Stream enhancements and performance improvements
+- **Helpful NullPointerExceptions**: Leverage detailed NPE messages for debugging
+- **Module System**: Consider JPMS modules for better encapsulation
+- **Performance**: Take advantage of JVM improvements in Java 17 LTS
+- **Security**: Utilize enhanced security features and algorithms
+
+## Traditional Java Best Practices
 - Following SOLID principles
 - Proper use of Collections API
-- Stream API efficiency
-- Proper equals/hashCode implementation
-- Immutability where appropriate
+- Stream API efficiency with Java 17 optimizations
+- Proper equals/hashCode implementation (consider records)
+- Immutability where appropriate (leverage records and sealed classes)
 
 </review_guidelines>
 
@@ -165,7 +219,7 @@ When providing the review, structure it as:
 ## Files Changed
 - [List of files modified in this commit range with change summary]
 - **Added Files**: [count] files
-- **Modified Files**: [count] files  
+- **Modified Files**: [count] files
 - **Deleted Files**: [count] files
 - **Renamed/Moved Files**: [count] files
 
@@ -203,11 +257,52 @@ When providing the review, structure it as:
 ### For [AnotherFile.java]:
 1. [Specific recommendation]
 
+## Java 17 Feature Adoption Assessment
+### Modern Java Features Usage:
+- **Records Implementation**:
+  - ✅ Data carriers converted to records: [count] classes
+  - ⚠️ Missed opportunities: [list of POJOs that could be records]
+- **Pattern Matching**:
+  - ✅ instanceof with pattern matching: [count] instances
+  - ⚠️ Traditional instanceof that could be modernized: [count] instances
+- **Switch Expressions**:
+  - ✅ Switch expressions used: [count] instances
+  - ⚠️ Switch statements that could be expressions: [count] instances
+- **Text Blocks**:
+  - ✅ Multi-line strings using text blocks: [count] instances
+  - ⚠️ String concatenations that could use text blocks: [count] instances
+- **Sealed Classes**:
+  - ✅ Controlled hierarchies with sealed classes: [count] hierarchies
+  - ⚠️ Open hierarchies that could be sealed: [count] hierarchies
+- **Local Variable Type Inference (var)**:
+  - ✅ Appropriate var usage: [count] instances
+  - ⚠️ Verbose type declarations that could use var: [count] instances
+
+### Performance & Security Enhancements:
+- **Stream API**: Java 17 stream improvements utilized
+- **JVM Performance**: Leveraging G1GC and performance improvements
+- **Security**: Enhanced security algorithms and features used
+- **Memory Management**: Efficient memory usage patterns
+
+## Spring Boot 3.x Modernization Assessment
+### Framework Integration:
+- **Jakarta EE Migration**: Packages migrated from javax.* to jakarta.*
+- **Configuration Properties**: @ConfigurationProperties using records
+- **Native Compilation**: GraalVM compatibility considerations
+- **Observability**: New observability features utilized
+- **Virtual Threads**: Project Loom integration for I/O operations
+- **Problem Details**: RFC 7807 problem details implementation
+- **Testing**: Modern testing approaches with Java 17 features
+
 ## Spring Boot Specific Feedback
 - [Framework-specific observations and recommendations]
+- [Integration opportunities with Java 17 features]
+- [Spring Boot 3.x feature adoption recommendations]
 
 ## Test Coverage Assessment
 - [Analysis of test coverage for new/modified code in the commit range]
+- [Testing of Java 17 feature implementations]
+- [Spring Boot 3.x testing capabilities usage]
 - [Recommendations for additional tests needed]
 
 ## Commit-Specific Considerations
@@ -257,7 +352,7 @@ myreview-from-commit 37daa8d4b2c1a3f5e8d9c2b1a4f7e6d3c8b5a9f2
 If running `myreview-from-commit 37daa8d` finds:
 - **Commit Range**: 37daa8d to HEAD (5 commits)
 - **Modified**: `CityController.java` (added new endpoint)
-- **Modified**: `CityService.java` (added business logic) 
+- **Modified**: `CityService.java` (added business logic)
 - **Added**: `CityValidation.java` (new validation logic)
 - **No corresponding test updates**
 
@@ -301,7 +396,7 @@ git diff ${COMMIT_HASH}~1..HEAD --name-status
 
 # Count different types of changes
 echo "Added files: $(git diff ${COMMIT_HASH}~1..HEAD --name-status | grep "^A" | wc -l)"
-echo "Modified files: $(git diff ${COMMIT_HASH}~1..HEAD --name-status | grep "^M" | wc -l)"  
+echo "Modified files: $(git diff ${COMMIT_HASH}~1..HEAD --name-status | grep "^M" | wc -l)"
 echo "Deleted files: $(git diff ${COMMIT_HASH}~1..HEAD --name-status | grep "^D" | wc -l)"
 echo "Renamed files: $(git diff ${COMMIT_HASH}~1..HEAD --name-status | grep "^R" | wc -l)"
 ```
@@ -312,7 +407,7 @@ echo "Renamed files: $(git diff ${COMMIT_HASH}~1..HEAD --name-status | grep "^R"
 git log ${COMMIT_HASH}~1..HEAD --oneline --no-merges
 
 # Include the starting commit itself
-git log ${COMMIT_HASH}^..HEAD --oneline --no-merges  
+git log ${COMMIT_HASH}^..HEAD --oneline --no-merges
 
 # Show commits with file changes
 git log ${COMMIT_HASH}~1..HEAD --oneline --name-only --no-merges
@@ -329,10 +424,10 @@ for file in $(git diff ${COMMIT_HASH}~1..HEAD --name-only); do
     echo "=== Analysis for $file ==="
     echo "Changes summary:"
     git diff ${COMMIT_HASH}~1..HEAD -- "$file" --stat
-    
+
     echo -e "\nCommits that modified this file:"
     git log ${COMMIT_HASH}~1..HEAD --oneline -- "$file"
-    
+
     echo -e "\nFirst and last modification:"
     FIRST_COMMIT=$(git log ${COMMIT_HASH}~1..HEAD --reverse --format="%h" -n 1 -- "$file")
     LAST_COMMIT=$(git log ${COMMIT_HASH}~1..HEAD --format="%h" -n 1 -- "$file")
@@ -369,7 +464,7 @@ git diff ${COMMIT_HASH}~1..HEAD --name-only | grep -i test
 ```bash
 # Basic commit range analysis
 git diff ${COMMIT_HASH}~1..HEAD --name-only    # Files changed since commit
-git log ${COMMIT_HASH}..HEAD --oneline         # Commits after the specified commit  
+git log ${COMMIT_HASH}..HEAD --oneline         # Commits after the specified commit
 git log ${COMMIT_HASH}^..HEAD --oneline        # Include the specified commit itself
 
 # Commit information
@@ -396,7 +491,7 @@ git log ${COMMIT_HASH}~1..HEAD --stat          # Commits with file statistics
 
 ## Commit Hash Formats
 - **Short hash**: `37daa8d` (7 characters minimum)
-- **Full hash**: `37daa8d4b2c1a3f5e8d9c2b1a4f7e6d3c8b5a9f2` 
+- **Full hash**: `37daa8d4b2c1a3f5e8d9c2b1a4f7e6d3c8b5a9f2`
 - **Branch name**: `feature/user-management`
 - **Tag name**: `v1.2.3`
 - **Relative reference**: `HEAD~5`, `master~3`
