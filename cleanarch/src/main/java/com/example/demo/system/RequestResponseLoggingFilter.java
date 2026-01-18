@@ -4,16 +4,18 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Map;
-import java.util.UUID;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.springframework.web.util.ContentCachingResponseWrapper;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.UUID;
 
 @Component
 public class RequestResponseLoggingFilter extends OncePerRequestFilter {
@@ -174,32 +176,27 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
 
     private String getHeaders(HttpServletRequest request) {
         StringBuilder headers = new StringBuilder();
-        request.getHeaderNames()
-                .asIterator()
-                .forEachRemaining(
-                        headerName -> {
-                            // Skip sensitive headers
-                            if (!headerName.equalsIgnoreCase("Authorization")
-                                    && !headerName.equalsIgnoreCase("Cookie")) {
-                                headers.append(headerName)
-                                        .append(": ")
-                                        .append(request.getHeader(headerName))
-                                        .append("; ");
-                            }
-                        });
+        request.getHeaderNames().asIterator().forEachRemaining(headerName -> {
+            // Skip sensitive headers
+            if (!headerName.equalsIgnoreCase("Authorization")
+                    && !headerName.equalsIgnoreCase("Cookie")) {
+                headers.append(headerName)
+                        .append(": ")
+                        .append(request.getHeader(headerName))
+                        .append("; ");
+            }
+        });
         return headers.toString();
     }
 
     private String getResponseHeaders(ContentCachingResponseWrapper response) {
         StringBuilder headers = new StringBuilder();
-        response.getHeaderNames()
-                .forEach(
-                        headerName -> {
-                            headers.append(headerName)
-                                    .append(": ")
-                                    .append(response.getHeader(headerName))
-                                    .append("; ");
-                        });
+        response.getHeaderNames().forEach(headerName -> {
+            headers.append(headerName)
+                    .append(": ")
+                    .append(response.getHeader(headerName))
+                    .append("; ");
+        });
         return headers.toString();
     }
 }

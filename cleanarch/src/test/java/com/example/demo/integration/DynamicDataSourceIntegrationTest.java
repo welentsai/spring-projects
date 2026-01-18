@@ -11,6 +11,7 @@ import com.example.demo.usecase.ports.in.FindCitiesUseCase;
 import com.example.demo.usecase.ports.out.gateway.InlineRoutingGateway;
 import com.example.demo.usecase.ports.out.gateway.InlineRoutingInput;
 import com.example.demo.usecase.ports.out.gateway.InlineRoutingOutput;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,9 +23,11 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("test")
 public class DynamicDataSourceIntegrationTest {
 
-    @Autowired private FindCitiesUseCase findCitiesUseCase;
+    @Autowired
+    private FindCitiesUseCase findCitiesUseCase;
 
-    @MockBean private InlineRoutingGateway inlineRoutingGateway;
+    @MockBean
+    private InlineRoutingGateway inlineRoutingGateway;
 
     @AfterEach
     void cleanup() {
@@ -139,11 +142,9 @@ public class DynamicDataSourceIntegrationTest {
 
         for (int i = 0; i < 5; i++) {
             final int index = i;
-            threads[i] =
-                    new Thread(
-                            () -> {
-                                results[index] = findCitiesUseCase.execute(input);
-                            });
+            threads[i] = new Thread(() -> {
+                results[index] = findCitiesUseCase.execute(input);
+            });
             threads[i].start();
         }
 

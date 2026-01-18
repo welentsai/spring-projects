@@ -1,13 +1,15 @@
 package com.example.demo.framework.di.dynamicdatasource;
 
-import java.util.HashMap;
-import java.util.Map;
-import javax.sql.DataSource;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.sql.DataSource;
 
 @Configuration
 public class DataSourceConfig {
@@ -15,13 +17,17 @@ public class DataSourceConfig {
     @Bean
     @ConfigurationProperties(prefix = "spring.datasource.inline.primary")
     public DataSource primaryDataSource() {
-        return DataSourceBuilder.create().type(com.zaxxer.hikari.HikariDataSource.class).build();
+        return DataSourceBuilder.create()
+                .type(com.zaxxer.hikari.HikariDataSource.class)
+                .build();
     }
 
     @Bean
     @ConfigurationProperties(prefix = "spring.datasource.inline.secondary")
     public DataSource secondaryDataSource() {
-        return DataSourceBuilder.create().type(com.zaxxer.hikari.HikariDataSource.class).build();
+        return DataSourceBuilder.create()
+                .type(com.zaxxer.hikari.HikariDataSource.class)
+                .build();
     }
 
     @Bean

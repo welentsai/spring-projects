@@ -3,6 +3,7 @@ package com.example.demo.adapter.in.controller;
 import com.example.demo.usecase.ports.in.FindCitiesInput;
 import com.example.demo.usecase.ports.in.FindCitiesResult;
 import com.example.demo.usecase.ports.in.FindCitiesUseCase;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

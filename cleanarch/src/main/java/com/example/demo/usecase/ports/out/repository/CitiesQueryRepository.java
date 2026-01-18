@@ -1,6 +1,7 @@
 package com.example.demo.usecase.ports.out.repository;
 
 import com.example.demo.usecase.ports.out.entity.CityJpaEntity;
+
 import java.util.List;
 import java.util.Optional;
 

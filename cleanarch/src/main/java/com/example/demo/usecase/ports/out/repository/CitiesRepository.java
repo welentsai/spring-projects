@@ -1,6 +1,7 @@
 package com.example.demo.usecase.ports.out.repository;
 
 import com.example.demo.usecase.ports.out.entity.CityJpaEntity;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

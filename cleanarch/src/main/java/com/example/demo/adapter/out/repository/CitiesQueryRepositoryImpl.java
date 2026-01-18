@@ -2,10 +2,12 @@ package com.example.demo.adapter.out.repository;
 
 import com.example.demo.usecase.ports.out.entity.CityJpaEntity;
 import com.example.demo.usecase.ports.out.repository.CitiesQueryRepository;
-import java.util.List;
-import java.util.Optional;
+
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class CitiesQueryRepositoryImpl implements CitiesQueryRepository {
@@ -22,14 +24,13 @@ public class CitiesQueryRepositoryImpl implements CitiesQueryRepository {
 
         return jdbcClient
                 .sql(sql)
-                .query(
-                        (rs, rowNum) -> {
-                            CityJpaEntity entity = new CityJpaEntity();
-                            entity.setId(rs.getString("id"));
-                            entity.setName(rs.getString("name"));
-                            entity.setCountry(rs.getString("country"));
-                            return entity;
-                        })
+                .query((rs, rowNum) -> {
+                    CityJpaEntity entity = new CityJpaEntity();
+                    entity.setId(rs.getString("id"));
+                    entity.setName(rs.getString("name"));
+                    entity.setCountry(rs.getString("country"));
+                    return entity;
+                })
                 .list();
     }
 
@@ -40,14 +41,13 @@ public class CitiesQueryRepositoryImpl implements CitiesQueryRepository {
         return jdbcClient
                 .sql(sql)
                 .param("name", name)
-                .query(
-                        (rs, rowNum) -> {
-                            CityJpaEntity entity = new CityJpaEntity();
-                            entity.setId(rs.getString("id"));
-                            entity.setName(rs.getString("name"));
-                            entity.setCountry(rs.getString("country"));
-                            return entity;
-                        })
+                .query((rs, rowNum) -> {
+                    CityJpaEntity entity = new CityJpaEntity();
+                    entity.setId(rs.getString("id"));
+                    entity.setName(rs.getString("name"));
+                    entity.setCountry(rs.getString("country"));
+                    return entity;
+                })
                 .optional();
     }
 
@@ -58,14 +58,13 @@ public class CitiesQueryRepositoryImpl implements CitiesQueryRepository {
         return jdbcClient
                 .sql(sql)
                 .param("country", country)
-                .query(
-                        (rs, rowNum) -> {
-                            CityJpaEntity entity = new CityJpaEntity();
-                            entity.setId(rs.getString("id"));
-                            entity.setName(rs.getString("name"));
-                            entity.setCountry(rs.getString("country"));
-                            return entity;
-                        })
+                .query((rs, rowNum) -> {
+                    CityJpaEntity entity = new CityJpaEntity();
+                    entity.setId(rs.getString("id"));
+                    entity.setName(rs.getString("name"));
+                    entity.setCountry(rs.getString("country"));
+                    return entity;
+                })
                 .list();
     }
 }

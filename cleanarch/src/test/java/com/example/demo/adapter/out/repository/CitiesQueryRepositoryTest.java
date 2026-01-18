@@ -4,8 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.demo.usecase.ports.out.entity.CityJpaEntity;
 import com.example.demo.usecase.ports.out.repository.CitiesQueryRepository;
-import java.util.List;
-import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,14 +13,19 @@ import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.util.List;
+import java.util.Optional;
+
 @JdbcTest
 @Import(CitiesQueryRepositoryImpl.class)
 @ActiveProfiles("test")
 class CitiesQueryRepositoryTest {
 
-    @Autowired private JdbcClient jdbcClient;
+    @Autowired
+    private JdbcClient jdbcClient;
 
-    @Autowired private CitiesQueryRepository citiesQueryRepository;
+    @Autowired
+    private CitiesQueryRepository citiesQueryRepository;
 
     @BeforeEach
     void setUp() {
@@ -235,17 +239,15 @@ class CitiesQueryRepositoryTest {
         assertThat(tokyo).isPresent();
 
         // Verify the same Tokyo entity is consistent across queries
-        CityJpaEntity tokyoFromAll =
-                allCities.stream()
-                        .filter(city -> "Tokyo".equals(city.getName()))
-                        .findFirst()
-                        .orElseThrow();
+        CityJpaEntity tokyoFromAll = allCities.stream()
+                .filter(city -> "Tokyo".equals(city.getName()))
+                .findFirst()
+                .orElseThrow();
 
-        CityJpaEntity tokyoFromJapan =
-                japanCities.stream()
-                        .filter(city -> "Tokyo".equals(city.getName()))
-                        .findFirst()
-                        .orElseThrow();
+        CityJpaEntity tokyoFromJapan = japanCities.stream()
+                .filter(city -> "Tokyo".equals(city.getName()))
+                .findFirst()
+                .orElseThrow();
 
         assertThat(tokyo.get().getId()).isEqualTo(tokyoFromAll.getId());
         assertThat(tokyo.get().getId()).isEqualTo(tokyoFromJapan.getId());

@@ -66,7 +66,7 @@
                         <!--                        </googleJavaFormat>-->
                         <palantirJavaFormat>
                             <version>2.39.0</version>                     <!-- optional -->
-                            <style>PALANTIR</style>                       <!-- or AOSP/GOOGLE (optional) -->
+                            <style>AOSP</style>                       <!-- or AOSP/GOOGLE (optional) -->
                             <formatJavadoc>false
                             </formatJavadoc>          <!-- defaults to false (optional, requires at least Palantir 2.39.0) -->
                         </palantirJavaFormat>

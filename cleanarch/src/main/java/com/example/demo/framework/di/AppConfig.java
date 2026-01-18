@@ -7,6 +7,7 @@ import com.example.demo.usecase.ports.in.impl.FindCitiesUseCaseImpl;
 import com.example.demo.usecase.ports.out.gateway.InlineRoutingGateway;
 import com.example.demo.usecase.ports.out.gateway.PutLogGateway;
 import com.example.demo.usecase.ports.out.repository.CitiesQueryRepository;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

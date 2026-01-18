@@ -8,7 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.example.demo.usecase.ports.in.FindCitiesResult;
 import com.example.demo.usecase.ports.in.FindCitiesUseCase;
 import com.example.demo.usecase.ports.in.dto.CityDto;
-import java.util.List;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,12 +18,16 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.util.List;
+
 @WebMvcTest(controllers = CitiesController.class)
 public class CitiesControllerTest {
 
-    @Autowired private MockMvc mockMvc;
+    @Autowired
+    private MockMvc mockMvc;
 
-    @MockitoBean FindCitiesUseCase findCitiesUseCase;
+    @MockitoBean
+    FindCitiesUseCase findCitiesUseCase;
 
     @Test
     public void testFindCities_should_return_city_list() throws Exception {
@@ -33,10 +37,10 @@ public class CitiesControllerTest {
 
         when(findCitiesUseCase.execute(any())).thenReturn(successResult);
 
-        MvcResult result =
-                mockMvc.perform(get("/api/v1/cities").contentType(MediaType.APPLICATION_JSON))
-                        .andExpect(status().isOk())
-                        .andReturn();
+        MvcResult result = mockMvc.perform(
+                        get("/api/v1/cities").contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andReturn();
 
         String responseBody = result.getResponse().getContentAsString();
 
@@ -53,10 +57,10 @@ public class CitiesControllerTest {
 
         when(findCitiesUseCase.execute(any())).thenReturn(failureResult);
 
-        MvcResult result =
-                mockMvc.perform(get("/api/v1/cities").contentType(MediaType.APPLICATION_JSON))
-                        .andExpect(status().isInternalServerError())
-                        .andReturn();
+        MvcResult result = mockMvc.perform(
+                        get("/api/v1/cities").contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError())
+                .andReturn();
 
         String responseBody = result.getResponse().getContentAsString();
 

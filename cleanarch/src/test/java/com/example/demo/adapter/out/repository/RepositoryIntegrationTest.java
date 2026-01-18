@@ -5,8 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.example.demo.usecase.ports.out.entity.CityJpaEntity;
 import com.example.demo.usecase.ports.out.repository.CitiesQueryRepository;
 import com.example.demo.usecase.ports.out.repository.CitiesRepository;
-import java.util.List;
-import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -14,15 +13,20 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Optional;
+
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class RepositoryIntegrationTest {
 
-    @Autowired private CitiesRepository citiesRepository;
+    @Autowired
+    private CitiesRepository citiesRepository;
 
-    @Autowired private CitiesQueryRepository citiesQueryRepository;
+    @Autowired
+    private CitiesQueryRepository citiesQueryRepository;
 
     @Test
     void should_maintain_consistency_between_jpa_and_jdbc_repositories() {
@@ -215,18 +219,17 @@ class RepositoryIntegrationTest {
     @Test
     void should_demonstrate_performance_characteristics() {
         // Given - Large dataset
-        List<CityJpaEntity> cities =
-                List.of(
-                        new CityJpaEntity("1", "Tokyo", "Japan"),
-                        new CityJpaEntity("2", "Delhi", "India"),
-                        new CityJpaEntity("3", "Shanghai", "China"),
-                        new CityJpaEntity("4", "São Paulo", "Brazil"),
-                        new CityJpaEntity("5", "Mexico City", "Mexico"),
-                        new CityJpaEntity("6", "Cairo", "Egypt"),
-                        new CityJpaEntity("7", "Mumbai", "India"),
-                        new CityJpaEntity("8", "Beijing", "China"),
-                        new CityJpaEntity("9", "Dhaka", "Bangladesh"),
-                        new CityJpaEntity("10", "Osaka", "Japan"));
+        List<CityJpaEntity> cities = List.of(
+                new CityJpaEntity("1", "Tokyo", "Japan"),
+                new CityJpaEntity("2", "Delhi", "India"),
+                new CityJpaEntity("3", "Shanghai", "China"),
+                new CityJpaEntity("4", "São Paulo", "Brazil"),
+                new CityJpaEntity("5", "Mexico City", "Mexico"),
+                new CityJpaEntity("6", "Cairo", "Egypt"),
+                new CityJpaEntity("7", "Mumbai", "India"),
+                new CityJpaEntity("8", "Beijing", "China"),
+                new CityJpaEntity("9", "Dhaka", "Bangladesh"),
+                new CityJpaEntity("10", "Osaka", "Japan"));
 
         citiesRepository.saveAll(cities);
 

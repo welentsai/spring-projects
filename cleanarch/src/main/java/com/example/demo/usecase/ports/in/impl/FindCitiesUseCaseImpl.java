@@ -9,9 +9,11 @@ import com.example.demo.usecase.ports.in.dto.CityDto;
 import com.example.demo.usecase.ports.out.entity.CityJpaEntity;
 import com.example.demo.usecase.ports.out.gateway.*;
 import com.example.demo.usecase.ports.out.repository.CitiesQueryRepository;
-import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 public class FindCitiesUseCaseImpl implements FindCitiesUseCase {
     private static final Logger logger = LoggerFactory.getLogger(FindCitiesUseCaseImpl.class);
@@ -50,10 +52,9 @@ public class FindCitiesUseCaseImpl implements FindCitiesUseCase {
             // Spring Data JPA 會透過我們的 DynamicRoutingDataSource 找到正確的資料來源
 
             // Set the data source context based on routing decision
-            DataSourceKey dataSourceKey =
-                    "PRIMARY".equals(output.datasourceKey())
-                            ? DataSourceKey.PRIMARY
-                            : DataSourceKey.SECONDARY;
+            DataSourceKey dataSourceKey = "PRIMARY".equals(output.datasourceKey())
+                    ? DataSourceKey.PRIMARY
+                    : DataSourceKey.SECONDARY;
 
             DataSourceContextHolder.setDataSourceKey(dataSourceKey);
             logger.info("Set data source context to: {}", dataSourceKey);
@@ -64,15 +65,10 @@ public class FindCitiesUseCaseImpl implements FindCitiesUseCase {
                 List<CityJpaEntity> cityEntities = citiesQueryRepository.findAll();
 
                 // Map JPA entities to DTOs
-                List<CityDto> cityDtos =
-                        cityEntities.stream()
-                                .map(
-                                        entity ->
-                                                new CityDto(
-                                                        entity.getId(),
-                                                        entity.getName(),
-                                                        entity.getCountry()))
-                                .toList();
+                List<CityDto> cityDtos = cityEntities.stream()
+                        .map(entity ->
+                                new CityDto(entity.getId(), entity.getName(), entity.getCountry()))
+                        .toList();
 
                 return FindCitiesResult.success(cityDtos);
             } finally {

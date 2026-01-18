@@ -3,8 +3,7 @@ package com.example.demo.usecase.ports.out.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.demo.usecase.ports.out.entity.CityJpaEntity;
-import java.util.List;
-import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,13 +12,18 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Optional;
+
 @DataJpaTest
 @Transactional
 class CitiesRepositoryTest {
 
-    @Autowired private TestEntityManager entityManager;
+    @Autowired
+    private TestEntityManager entityManager;
 
-    @Autowired private CitiesRepository citiesRepository;
+    @Autowired
+    private CitiesRepository citiesRepository;
 
     @BeforeEach
     void setUp() {

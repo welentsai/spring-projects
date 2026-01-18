@@ -1,6 +1,7 @@
 package com.example.demo.usecase.ports.in;
 
 import com.example.demo.usecase.ports.in.dto.CityDto;
+
 import java.util.List;
 
 public class FindCitiesResult extends Result<List<CityDto>> {

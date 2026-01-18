@@ -6,7 +6,8 @@ import jakarta.persistence.Id;
 @Entity
 public class CityJpaEntity {
 
-    @Id private String id;
+    @Id
+    private String id;
 
     private String name;
     private String country;
