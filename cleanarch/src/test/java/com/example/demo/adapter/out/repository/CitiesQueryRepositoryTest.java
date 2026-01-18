@@ -30,16 +30,13 @@ class CitiesQueryRepositoryTest {
     @BeforeEach
     void setUp() {
         // Create table for testing (since @JdbcTest doesn't include JPA auto-creation)
-        jdbcClient
-                .sql(
-                        """
+        jdbcClient.sql("""
             CREATE TABLE IF NOT EXISTS city_jpa_entity (
                 id VARCHAR(255) PRIMARY KEY,
                 name VARCHAR(255),
                 country VARCHAR(255)
             )
-        """)
-                .update();
+        """).update();
 
         // Clear any existing data
         jdbcClient.sql("DELETE FROM city_jpa_entity").update();
