@@ -28,14 +28,14 @@ public class CitiesController {
             return ResponseEntity.ok(result);
         } else {
             // Map different error codes to appropriate HTTP status codes
-            HttpStatus status = switch (result.getReturnCode()) {
-                case "NOT_FOUND" -> HttpStatus.NOT_FOUND;
-                case "VALIDATION_ERROR" -> HttpStatus.BAD_REQUEST;
-                case "INTERNAL_ERROR" -> HttpStatus.INTERNAL_SERVER_ERROR;
-                default -> HttpStatus.INTERNAL_SERVER_ERROR;
-            };
+            HttpStatus status =
+                    switch (result.getReturnCode()) {
+                        case "NOT_FOUND" -> HttpStatus.NOT_FOUND;
+                        case "VALIDATION_ERROR" -> HttpStatus.BAD_REQUEST;
+                        case "INTERNAL_ERROR" -> HttpStatus.INTERNAL_SERVER_ERROR;
+                        default -> HttpStatus.INTERNAL_SERVER_ERROR;
+                    };
             return ResponseEntity.status(status).body(result);
         }
     }
-
 }

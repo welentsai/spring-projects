@@ -1,7 +1,10 @@
 package com.example.demo.integration;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
 import com.example.demo.framework.di.dynamicdatasource.DataSourceContextHolder;
-import com.example.demo.framework.di.dynamicdatasource.DataSourceKey;
 import com.example.demo.usecase.ports.in.FindCitiesInput;
 import com.example.demo.usecase.ports.in.FindCitiesResult;
 import com.example.demo.usecase.ports.in.FindCitiesUseCase;
@@ -15,19 +18,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-
 @SpringBootTest
 @ActiveProfiles("test")
 public class DynamicDataSourceIntegrationTest {
 
-    @Autowired
-    private FindCitiesUseCase findCitiesUseCase;
+    @Autowired private FindCitiesUseCase findCitiesUseCase;
 
-    @MockBean
-    private InlineRoutingGateway inlineRoutingGateway;
+    @MockBean private InlineRoutingGateway inlineRoutingGateway;
 
     @AfterEach
     void cleanup() {
@@ -40,7 +37,7 @@ public class DynamicDataSourceIntegrationTest {
         // Given
         when(inlineRoutingGateway.execute(any(InlineRoutingInput.class)))
                 .thenReturn(new InlineRoutingOutput("PRIMARY"));
-        
+
         FindCitiesInput input = new FindCitiesInput();
 
         // When
@@ -57,7 +54,7 @@ public class DynamicDataSourceIntegrationTest {
         // Given
         when(inlineRoutingGateway.execute(any(InlineRoutingInput.class)))
                 .thenReturn(new InlineRoutingOutput("SECONDARY"));
-        
+
         FindCitiesInput input = new FindCitiesInput();
 
         // When
@@ -74,7 +71,7 @@ public class DynamicDataSourceIntegrationTest {
         // Given
         when(inlineRoutingGateway.execute(any(InlineRoutingInput.class)))
                 .thenReturn(new InlineRoutingOutput("PRIMARY"));
-        
+
         FindCitiesInput input = new FindCitiesInput();
 
         // When
@@ -91,7 +88,7 @@ public class DynamicDataSourceIntegrationTest {
                 .thenReturn(new InlineRoutingOutput("PRIMARY"))
                 .thenReturn(new InlineRoutingOutput("SECONDARY"))
                 .thenReturn(new InlineRoutingOutput("PRIMARY"));
-        
+
         FindCitiesInput input = new FindCitiesInput();
 
         // When & Then
@@ -116,7 +113,7 @@ public class DynamicDataSourceIntegrationTest {
         // Given
         when(inlineRoutingGateway.execute(any(InlineRoutingInput.class)))
                 .thenReturn(new InlineRoutingOutput("UNKNOWN"));
-        
+
         FindCitiesInput input = new FindCitiesInput();
 
         // When
@@ -133,26 +130,28 @@ public class DynamicDataSourceIntegrationTest {
         // Given
         when(inlineRoutingGateway.execute(any(InlineRoutingInput.class)))
                 .thenReturn(new InlineRoutingOutput("PRIMARY"));
-        
+
         FindCitiesInput input = new FindCitiesInput();
-        
+
         // When - Execute in multiple threads
         Thread[] threads = new Thread[5];
         FindCitiesResult[] results = new FindCitiesResult[5];
-        
+
         for (int i = 0; i < 5; i++) {
             final int index = i;
-            threads[i] = new Thread(() -> {
-                results[index] = findCitiesUseCase.execute(input);
-            });
+            threads[i] =
+                    new Thread(
+                            () -> {
+                                results[index] = findCitiesUseCase.execute(input);
+                            });
             threads[i].start();
         }
-        
+
         // Wait for all threads to complete
         for (Thread thread : threads) {
             thread.join();
         }
-        
+
         // Then - All should succeed and context should be clean
         for (FindCitiesResult result : results) {
             assertThat(result.isSuccess()).isTrue();

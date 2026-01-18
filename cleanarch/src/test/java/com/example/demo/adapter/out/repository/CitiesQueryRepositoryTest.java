@@ -1,7 +1,11 @@
 package com.example.demo.adapter.out.repository;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.example.demo.usecase.ports.out.entity.CityJpaEntity;
 import com.example.demo.usecase.ports.out.repository.CitiesQueryRepository;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,33 +14,29 @@ import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 @JdbcTest
 @Import(CitiesQueryRepositoryImpl.class)
 @ActiveProfiles("test")
 class CitiesQueryRepositoryTest {
 
-    @Autowired
-    private JdbcClient jdbcClient;
+    @Autowired private JdbcClient jdbcClient;
 
-    @Autowired
-    private CitiesQueryRepository citiesQueryRepository;
+    @Autowired private CitiesQueryRepository citiesQueryRepository;
 
     @BeforeEach
     void setUp() {
         // Create table for testing (since @JdbcTest doesn't include JPA auto-creation)
-        jdbcClient.sql("""
+        jdbcClient
+                .sql(
+                        """
             CREATE TABLE IF NOT EXISTS city_jpa_entity (
                 id VARCHAR(255) PRIMARY KEY,
                 name VARCHAR(255),
                 country VARCHAR(255)
             )
-        """).update();
-        
+        """)
+                .update();
+
         // Clear any existing data
         jdbcClient.sql("DELETE FROM city_jpa_entity").update();
     }
@@ -53,9 +53,11 @@ class CitiesQueryRepositoryTest {
 
         // Then
         assertThat(cities).hasSize(3);
-        assertThat(cities).extracting(CityJpaEntity::getName)
+        assertThat(cities)
+                .extracting(CityJpaEntity::getName)
                 .containsExactlyInAnyOrder("Tokyo", "Seoul", "Bangkok");
-        assertThat(cities).extracting(CityJpaEntity::getCountry)
+        assertThat(cities)
+                .extracting(CityJpaEntity::getCountry)
                 .containsExactlyInAnyOrder("Japan", "South Korea", "Thailand");
     }
 
@@ -122,7 +124,8 @@ class CitiesQueryRepositoryTest {
 
         // Then
         assertThat(japanCities).hasSize(2);
-        assertThat(japanCities).extracting(CityJpaEntity::getName)
+        assertThat(japanCities)
+                .extracting(CityJpaEntity::getName)
                 .containsExactlyInAnyOrder("Tokyo", "Osaka");
         assertThat(japanCities).allMatch(city -> "Japan".equals(city.getCountry()));
     }
@@ -183,10 +186,10 @@ class CitiesQueryRepositoryTest {
         // Then
         assertThat(saoPaulo).isPresent();
         assertThat(saoPaulo.get().getCountry()).isEqualTo("Brazil");
-        
+
         assertThat(mexicoCity).isPresent();
         assertThat(mexicoCity.get().getCountry()).isEqualTo("Mexico");
-        
+
         assertThat(zurich).isPresent();
         assertThat(zurich.get().getCountry()).isEqualTo("Switzerland");
     }
@@ -197,17 +200,18 @@ class CitiesQueryRepositoryTest {
         insertTestCity("query1", "TestQueryCity", "TestCountry");
         insertTestCity("query2", "AnotherQueryCity", "TestCountry");
         insertTestCity("query3", "QueryCity3", "AnotherTestCountry");
-        
+
         // When
         List<CityJpaEntity> allCities = citiesQueryRepository.findAll();
-        
+
         // Then
         assertThat(allCities).hasSize(3);
-        
+
         // Test specific queries with predefined data
         Optional<CityJpaEntity> testCity = citiesQueryRepository.findByName("TestQueryCity");
-        List<CityJpaEntity> testCountryCities = citiesQueryRepository.findAllByCountry("TestCountry");
-        
+        List<CityJpaEntity> testCountryCities =
+                citiesQueryRepository.findAllByCountry("TestCountry");
+
         assertThat(testCity).isPresent();
         assertThat(testCity.get().getId()).isEqualTo("query1");
         assertThat(testCountryCities).hasSize(2);
@@ -229,24 +233,27 @@ class CitiesQueryRepositoryTest {
         assertThat(allCities).hasSize(3);
         assertThat(japanCities).hasSize(2);
         assertThat(tokyo).isPresent();
-        
+
         // Verify the same Tokyo entity is consistent across queries
-        CityJpaEntity tokyoFromAll = allCities.stream()
-                .filter(city -> "Tokyo".equals(city.getName()))
-                .findFirst()
-                .orElseThrow();
-        
-        CityJpaEntity tokyoFromJapan = japanCities.stream()
-                .filter(city -> "Tokyo".equals(city.getName()))
-                .findFirst()
-                .orElseThrow();
-        
+        CityJpaEntity tokyoFromAll =
+                allCities.stream()
+                        .filter(city -> "Tokyo".equals(city.getName()))
+                        .findFirst()
+                        .orElseThrow();
+
+        CityJpaEntity tokyoFromJapan =
+                japanCities.stream()
+                        .filter(city -> "Tokyo".equals(city.getName()))
+                        .findFirst()
+                        .orElseThrow();
+
         assertThat(tokyo.get().getId()).isEqualTo(tokyoFromAll.getId());
         assertThat(tokyo.get().getId()).isEqualTo(tokyoFromJapan.getId());
     }
 
     private void insertTestCity(String id, String name, String country) {
-        jdbcClient.sql("INSERT INTO city_jpa_entity (id, name, country) VALUES (?, ?, ?)")
+        jdbcClient
+                .sql("INSERT INTO city_jpa_entity (id, name, country) VALUES (?, ?, ?)")
                 .params(id, name, country)
                 .update();
     }

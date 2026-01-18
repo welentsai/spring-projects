@@ -1,14 +1,14 @@
 package com.example.demo.archunit;
 
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.domain.JavaModifier;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.lang.ArchRule;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-
-import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
-import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 public class ArchunitRuleTest {
 

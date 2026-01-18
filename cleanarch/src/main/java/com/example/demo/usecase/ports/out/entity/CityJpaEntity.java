@@ -6,14 +6,12 @@ import jakarta.persistence.Id;
 @Entity
 public class CityJpaEntity {
 
-    @Id
-    private String id;
+    @Id private String id;
 
     private String name;
     private String country;
 
-    public CityJpaEntity() {
-    }
+    public CityJpaEntity() {}
 
     public CityJpaEntity(String id, String name, String country) {
         this.id = id;

@@ -1,6 +1,10 @@
 package com.example.demo.usecase.ports.out.repository;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.example.demo.usecase.ports.out.entity.CityJpaEntity;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,21 +13,14 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 @DataJpaTest
 @Transactional
 class CitiesRepositoryTest {
 
-    @Autowired
-    private TestEntityManager entityManager;
+    @Autowired private TestEntityManager entityManager;
 
-    @Autowired
-    private CitiesRepository citiesRepository;
-    
+    @Autowired private CitiesRepository citiesRepository;
+
     @BeforeEach
     void setUp() {
         // Clear any existing data before each test
@@ -64,7 +61,8 @@ class CitiesRepositoryTest {
 
         // Then
         assertThat(cities).hasSize(2);
-        assertThat(cities).extracting(CityJpaEntity::getName)
+        assertThat(cities)
+                .extracting(CityJpaEntity::getName)
                 .containsExactlyInAnyOrder("Tokyo", "Seoul");
     }
 
@@ -95,11 +93,11 @@ class CitiesRepositoryTest {
 
         // Then
         assertThat(deletedCount).isEqualTo(1);
-        
+
         // Verify the city is actually deleted
         Optional<CityJpaEntity> foundCity = citiesRepository.findById("1");
         assertThat(foundCity).isEmpty();
-        
+
         // Verify other city still exists
         Optional<CityJpaEntity> otherCity = citiesRepository.findById("2");
         assertThat(otherCity).isPresent();
@@ -116,7 +114,7 @@ class CitiesRepositoryTest {
 
         // Then
         assertThat(deletedCount).isEqualTo(0);
-        
+
         // Verify original city still exists
         Optional<CityJpaEntity> foundCity = citiesRepository.findById("1");
         assertThat(foundCity).isPresent();
@@ -137,13 +135,13 @@ class CitiesRepositoryTest {
 
         // Then
         assertThat(deletedCount).isEqualTo(2);
-        
+
         // Verify both Paris cities are deleted
         Optional<CityJpaEntity> paris1 = citiesRepository.findById("1");
         Optional<CityJpaEntity> paris2 = citiesRepository.findById("2");
         assertThat(paris1).isEmpty();
         assertThat(paris2).isEmpty();
-        
+
         // Verify London still exists
         Optional<CityJpaEntity> london = citiesRepository.findById("3");
         assertThat(london).isPresent();
@@ -161,7 +159,7 @@ class CitiesRepositoryTest {
 
         // Then
         assertThat(deletedCount).isEqualTo(0);
-        
+
         // Verify original city still exists
         Optional<CityJpaEntity> foundCity = citiesRepository.findById("1");
         assertThat(foundCity).isPresent();
@@ -175,7 +173,7 @@ class CitiesRepositoryTest {
 
         // Then
         assertThat(cities).hasSizeGreaterThan(0);
-        
+
         // Test delete operation with predefined data
         int deletedCount = citiesRepository.deleteByNameReturningCount("TestCity");
         assertThat(deletedCount).isGreaterThanOrEqualTo(0);

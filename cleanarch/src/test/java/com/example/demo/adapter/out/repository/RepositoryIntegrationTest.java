@@ -1,8 +1,12 @@
 package com.example.demo.adapter.out.repository;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.example.demo.usecase.ports.out.entity.CityJpaEntity;
 import com.example.demo.usecase.ports.out.repository.CitiesQueryRepository;
 import com.example.demo.usecase.ports.out.repository.CitiesRepository;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -10,22 +14,15 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class RepositoryIntegrationTest {
 
-    @Autowired
-    private CitiesRepository citiesRepository;
+    @Autowired private CitiesRepository citiesRepository;
 
-    @Autowired
-    private CitiesQueryRepository citiesQueryRepository;
+    @Autowired private CitiesQueryRepository citiesQueryRepository;
 
     @Test
     void should_maintain_consistency_between_jpa_and_jdbc_repositories() {
@@ -33,7 +30,7 @@ class RepositoryIntegrationTest {
         CityJpaEntity tokyo = new CityJpaEntity("1", "Tokyo", "Japan");
         CityJpaEntity seoul = new CityJpaEntity("2", "Seoul", "South Korea");
         CityJpaEntity bangkok = new CityJpaEntity("3", "Bangkok", "Thailand");
-        
+
         citiesRepository.save(tokyo);
         citiesRepository.save(seoul);
         citiesRepository.save(bangkok);
@@ -65,7 +62,7 @@ class RepositoryIntegrationTest {
         CityJpaEntity city1 = new CityJpaEntity("1", "Tokyo", "Japan");
         CityJpaEntity city2 = new CityJpaEntity("2", "Osaka", "Japan");
         CityJpaEntity city3 = new CityJpaEntity("3", "Seoul", "South Korea");
-        
+
         citiesRepository.save(city1);
         citiesRepository.save(city2);
         citiesRepository.save(city3);
@@ -79,10 +76,11 @@ class RepositoryIntegrationTest {
 
         // Then - Verify deletion via JDBC queries
         assertThat(deletedCount).isEqualTo(1);
-        
+
         List<CityJpaEntity> remainingCities = citiesQueryRepository.findAll();
         assertThat(remainingCities).hasSize(2);
-        assertThat(remainingCities).extracting(CityJpaEntity::getName)
+        assertThat(remainingCities)
+                .extracting(CityJpaEntity::getName)
                 .containsExactlyInAnyOrder("Osaka", "Seoul");
 
         Optional<CityJpaEntity> deletedCity = citiesQueryRepository.findByName("Tokyo");
@@ -100,7 +98,7 @@ class RepositoryIntegrationTest {
         CityJpaEntity paris2 = new CityJpaEntity("2", "Paris", "USA");
         CityJpaEntity london = new CityJpaEntity("3", "London", "UK");
         CityJpaEntity madrid = new CityJpaEntity("4", "Madrid", "Spain");
-        
+
         citiesRepository.saveAll(List.of(paris1, paris2, london, madrid));
 
         // Verify initial state
@@ -112,10 +110,11 @@ class RepositoryIntegrationTest {
 
         // Then - Verify bulk deletion via JDBC
         assertThat(deletedCount).isEqualTo(2);
-        
+
         List<CityJpaEntity> remainingCities = citiesQueryRepository.findAll();
         assertThat(remainingCities).hasSize(2);
-        assertThat(remainingCities).extracting(CityJpaEntity::getName)
+        assertThat(remainingCities)
+                .extracting(CityJpaEntity::getName)
                 .containsExactlyInAnyOrder("London", "Madrid");
 
         // Verify no Paris cities remain
@@ -136,24 +135,26 @@ class RepositoryIntegrationTest {
         // When - Perform multiple operations in same transaction
         CityJpaEntity newCity1 = new CityJpaEntity("2", "NewCity1", "Country1");
         CityJpaEntity newCity2 = new CityJpaEntity("3", "NewCity2", "Country2");
-        
+
         citiesRepository.save(newCity1);
         citiesRepository.save(newCity2);
-        
+
         int deletedCount = citiesRepository.deleteByNameReturningCount("InitialCity");
 
         // Then - Verify all operations are visible in same transaction
         assertThat(deletedCount).isEqualTo(1);
-        
+
         List<CityJpaEntity> finalCitiesViaJpa = citiesRepository.findAll();
         List<CityJpaEntity> finalCitiesViaJdbc = citiesQueryRepository.findAll();
-        
+
         assertThat(finalCitiesViaJpa).hasSize(2);
         assertThat(finalCitiesViaJdbc).hasSize(2);
-        
-        assertThat(finalCitiesViaJpa).extracting(CityJpaEntity::getName)
+
+        assertThat(finalCitiesViaJpa)
+                .extracting(CityJpaEntity::getName)
                 .containsExactlyInAnyOrder("NewCity1", "NewCity2");
-        assertThat(finalCitiesViaJdbc).extracting(CityJpaEntity::getName)
+        assertThat(finalCitiesViaJdbc)
+                .extracting(CityJpaEntity::getName)
                 .containsExactlyInAnyOrder("NewCity1", "NewCity2");
     }
 
@@ -162,7 +163,7 @@ class RepositoryIntegrationTest {
         // Test empty database state
         List<CityJpaEntity> emptyCitiesJpa = citiesRepository.findAll();
         List<CityJpaEntity> emptyCitiesJdbc = citiesQueryRepository.findAll();
-        
+
         assertThat(emptyCitiesJpa).isEmpty();
         assertThat(emptyCitiesJdbc).isEmpty();
 
@@ -172,8 +173,9 @@ class RepositoryIntegrationTest {
 
         // Test queries on empty database
         Optional<CityJpaEntity> notFound = citiesQueryRepository.findByName("NonExistent");
-        List<CityJpaEntity> emptyCountryList = citiesQueryRepository.findAllByCountry("NonExistent");
-        
+        List<CityJpaEntity> emptyCountryList =
+                citiesQueryRepository.findAllByCountry("NonExistent");
+
         assertThat(notFound).isEmpty();
         assertThat(emptyCountryList).isEmpty();
     }
@@ -184,7 +186,7 @@ class RepositoryIntegrationTest {
         CityJpaEntity saoPaulo = new CityJpaEntity("1", "São Paulo", "Brazil");
         CityJpaEntity mexicoCity = new CityJpaEntity("2", "México City", "Mexico");
         CityJpaEntity zurich = new CityJpaEntity("3", "Zürich", "Switzerland");
-        
+
         citiesRepository.saveAll(List.of(saoPaulo, mexicoCity, zurich));
 
         // When - Query via JDBC
@@ -195,17 +197,17 @@ class RepositoryIntegrationTest {
         // Then - Verify special characters are handled correctly
         assertThat(saoPauloViaJdbc).isPresent();
         assertThat(saoPauloViaJdbc.get().getCountry()).isEqualTo("Brazil");
-        
+
         assertThat(mexicoCityViaJdbc).isPresent();
         assertThat(mexicoCityViaJdbc.get().getCountry()).isEqualTo("Mexico");
-        
+
         assertThat(zurichViaJdbc).isPresent();
         assertThat(zurichViaJdbc.get().getCountry()).isEqualTo("Switzerland");
 
         // Test deletion with special characters
         int deletedCount = citiesRepository.deleteByNameReturningCount("São Paulo");
         assertThat(deletedCount).isEqualTo(1);
-        
+
         Optional<CityJpaEntity> deletedCity = citiesQueryRepository.findByName("São Paulo");
         assertThat(deletedCity).isEmpty();
     }
@@ -213,19 +215,19 @@ class RepositoryIntegrationTest {
     @Test
     void should_demonstrate_performance_characteristics() {
         // Given - Large dataset
-        List<CityJpaEntity> cities = List.of(
-            new CityJpaEntity("1", "Tokyo", "Japan"),
-            new CityJpaEntity("2", "Delhi", "India"),
-            new CityJpaEntity("3", "Shanghai", "China"),
-            new CityJpaEntity("4", "São Paulo", "Brazil"),
-            new CityJpaEntity("5", "Mexico City", "Mexico"),
-            new CityJpaEntity("6", "Cairo", "Egypt"),
-            new CityJpaEntity("7", "Mumbai", "India"),
-            new CityJpaEntity("8", "Beijing", "China"),
-            new CityJpaEntity("9", "Dhaka", "Bangladesh"),
-            new CityJpaEntity("10", "Osaka", "Japan")
-        );
-        
+        List<CityJpaEntity> cities =
+                List.of(
+                        new CityJpaEntity("1", "Tokyo", "Japan"),
+                        new CityJpaEntity("2", "Delhi", "India"),
+                        new CityJpaEntity("3", "Shanghai", "China"),
+                        new CityJpaEntity("4", "São Paulo", "Brazil"),
+                        new CityJpaEntity("5", "Mexico City", "Mexico"),
+                        new CityJpaEntity("6", "Cairo", "Egypt"),
+                        new CityJpaEntity("7", "Mumbai", "India"),
+                        new CityJpaEntity("8", "Beijing", "China"),
+                        new CityJpaEntity("9", "Dhaka", "Bangladesh"),
+                        new CityJpaEntity("10", "Osaka", "Japan"));
+
         citiesRepository.saveAll(cities);
 
         // When - Perform queries via both methods
@@ -240,12 +242,12 @@ class RepositoryIntegrationTest {
         // Then - Verify both return same results
         assertThat(allCitiesJpa).hasSize(10);
         assertThat(allCitiesJdbc).hasSize(10);
-        
+
         // Both should contain the same cities (order might differ)
-        assertThat(allCitiesJpa).extracting(CityJpaEntity::getName)
+        assertThat(allCitiesJpa)
+                .extracting(CityJpaEntity::getName)
                 .containsExactlyInAnyOrderElementsOf(
-                    allCitiesJdbc.stream().map(CityJpaEntity::getName).toList()
-                );
+                        allCitiesJdbc.stream().map(CityJpaEntity::getName).toList());
 
         // Performance comparison (informational - actual times may vary)
         System.out.println("JPA query time: " + jpaTime + "ms");
