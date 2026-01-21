@@ -70,6 +70,18 @@
                     </java>
                 </configuration>
             </plugin>
+            <!-- Add OpenRewrite Plugin -->
+            <plugin>
+                <groupId>org.openrewrite.maven</groupId>
+                <artifactId>rewrite-maven-plugin</artifactId>
+                <version>6.22.1</version>
+                <configuration>
+                    <activeRecipes>
+                        <recipe>org.openrewrite.java.RemoveUnusedImports</recipe>
+                        <recipe>org.openrewrite.java.ChangeMethodTargetToStatic</recipe>
+                    </activeRecipes>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
