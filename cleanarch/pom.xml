@@ -78,9 +78,33 @@
                 <configuration>
                     <activeRecipes>
                         <recipe>org.openrewrite.java.RemoveUnusedImports</recipe>
-                        <recipe>org.openrewrite.java.ChangeMethodTargetToStatic</recipe>
+                        <!--                        <recipe>org.openrewrite.java.spring.boot3.SpringBoot3BestPractices</recipe>-->
+                        <!--                        <recipe>org.openrewrite.java.migrate.UpgradeToJava17</recipe>-->
                     </activeRecipes>
                 </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.openrewrite</groupId>
+                        <artifactId>rewrite-java</artifactId>
+                        <version>8.71.0</version>
+                        <scope>runtime</scope>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.openrewrite.recipe</groupId>
+                        <artifactId>rewrite-spring</artifactId>
+                        <version>5.21.0</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.openrewrite.recipe</groupId>
+                        <artifactId>rewrite-static-analysis</artifactId>
+                        <version>1.17.0</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.openrewrite.recipe</groupId>
+                        <artifactId>rewrite-testing-frameworks</artifactId>
+                        <version>2.20.0</version>
+                    </dependency>
+                </dependencies>
             </plugin>
         </plugins>
     </build>
