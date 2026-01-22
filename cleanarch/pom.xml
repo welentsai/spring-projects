@@ -101,6 +101,19 @@
                         <recipe>org.openrewrite.staticanalysis.UseDiamondOperator</recipe>
                         <recipe>org.openrewrite.staticanalysis.UseCollectionInterfaces</recipe>
 
+                        <!-- Modern Java 17 Features -->
+                        <recipe>org.openrewrite.java.migrate.lang.UseTextBlocks</recipe>
+                        <recipe>org.openrewrite.java.migrate.lang.var.UseVarForObject</recipe>
+                        <recipe>org.openrewrite.java.migrate.RemovedPolicy</recipe>
+                        <recipe>org.openrewrite.java.migrate.lang.StringFormatted</recipe>
+
+                        <!-- Stream API & Collections -->
+                        <recipe>org.openrewrite.staticanalysis.UseLambdaForFunctionalInterface</recipe>
+                        <recipe>org.openrewrite.staticanalysis.UseCollectionInterfaces</recipe>
+                        <recipe>
+                            org.openrewrite.staticanalysis.ReplaceApacheCommonsLang3ValidateNotNullWithObjectsRequireNonNull
+                        </recipe>
+
                         <!-- Logging Best Practices -->
                         <recipe>org.openrewrite.java.logging.slf4j.Slf4jBestPractices</recipe>
                         <recipe>org.openrewrite.java.logging.slf4j.ParameterizedLogging</recipe>
