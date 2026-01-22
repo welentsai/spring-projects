@@ -103,7 +103,6 @@
 
                         <!-- Modern Java 17 Features -->
                         <recipe>org.openrewrite.java.migrate.lang.UseTextBlocks</recipe>
-                        <recipe>org.openrewrite.java.migrate.lang.var.UseVarForObject</recipe>
                         <recipe>org.openrewrite.java.migrate.RemovedPolicy</recipe>
                         <recipe>org.openrewrite.java.migrate.lang.StringFormatted</recipe>
 
