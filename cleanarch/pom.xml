@@ -65,6 +65,7 @@
                         <!--                            <style>AOSP</style>-->
                         <!--                            <reflowLongStrings>true</reflowLongStrings>-->
                         <!--                        </googleJavaFormat>-->
+                        <!-- Java formatting with AOSP style -->
                         <palantirJavaFormat>
                             <version>2.85.0</version>
                             <style>AOSP</style>                       <!-- or AOSP/GOOGLE (optional) -->
@@ -73,6 +74,20 @@
                         <trimTrailingWhitespace/>
                         <endWithNewline/>
                     </java>
+
+                    <!-- JSON formatting -->
+                    <json>
+                        <includes>
+                            <include>src/**/*.json</include>
+                        </includes>
+                        <jackson>
+                            <version>2.17.0</version>
+                            <features>
+                                <INDENT_OUTPUT>true</INDENT_OUTPUT>
+                                <ORDER_MAP_ENTRIES_BY_KEYS>false</ORDER_MAP_ENTRIES_BY_KEYS>
+                            </features>
+                        </jackson>
+                    </json>
                 </configuration>
             </plugin>
             <!-- OpenRewrite Plugin -->
