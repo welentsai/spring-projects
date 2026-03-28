@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -27,7 +26,7 @@ class CitiesRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        // Clear any existing data before each test
+        // Clear any existing data before each test (data.sql seeds 5 cities on startup)
         citiesRepository.deleteAll();
         entityManager.flush();
         entityManager.clear();
@@ -170,8 +169,12 @@ class CitiesRepositoryTest {
     }
 
     @Test
-    @Sql("/test-data/cities-test-data.sql")
     void should_work_with_predefined_test_data() {
+        // Given - insert test data manually (@Sql runs before @BeforeEach and gets wiped)
+        citiesRepository.save(new CityJpaEntity("test1", "TestCity", "TestCountry"));
+        citiesRepository.save(new CityJpaEntity("test2", "AnotherTestCity", "TestCountry"));
+        citiesRepository.save(new CityJpaEntity("test3", "ThirdCity", "AnotherCountry"));
+
         // When
         List<CityJpaEntity> cities = citiesRepository.findAll();
 

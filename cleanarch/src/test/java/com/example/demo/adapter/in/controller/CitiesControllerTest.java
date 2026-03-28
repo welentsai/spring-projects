@@ -45,7 +45,7 @@ public class CitiesControllerTest {
         String responseBody = result.getResponse().getContentAsString();
 
         String expectedResp =
-                "{\"returnCode\":\"SUCCESS\",\"errorMessage\":null,\"data\":[{\"id\":\"1\",\"name\":\"A\",\"country\":\"TW\"},{\"id\":\"2\",\"name\":\"B\",\"country\":\"USA\"}],\"cities\":[{\"id\":\"1\",\"name\":\"A\",\"country\":\"TW\"},{\"id\":\"2\",\"name\":\"B\",\"country\":\"USA\"}],\"failure\":false,\"success\":true}";
+                "{\"returnCode\":\"SUCCESS\",\"errorMessage\":null,\"data\":[{\"id\":\"1\",\"name\":\"A\",\"country\":\"TW\"},{\"id\":\"2\",\"name\":\"B\",\"country\":\"USA\"}],\"cities\":[{\"id\":\"1\",\"name\":\"A\",\"country\":\"TW\"},{\"id\":\"2\",\"name\":\"B\",\"country\":\"USA\"}],\"success\":true,\"failure\":false}";
 
         Assertions.assertEquals(expectedResp, responseBody);
     }
@@ -65,7 +65,7 @@ public class CitiesControllerTest {
         String responseBody = result.getResponse().getContentAsString();
 
         String expectedResp =
-                "{\"returnCode\":\"INTERNAL_ERROR\",\"errorMessage\":\"Database connection failed\",\"data\":null,\"cities\":null,\"failure\":true,\"success\":false}";
+                "{\"returnCode\":\"INTERNAL_ERROR\",\"errorMessage\":\"Database connection failed\",\"data\":null,\"cities\":null,\"success\":false,\"failure\":true}";
         Assertions.assertEquals(expectedResp, responseBody);
     }
 }

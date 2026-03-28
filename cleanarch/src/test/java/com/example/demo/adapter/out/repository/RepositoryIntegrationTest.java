@@ -38,6 +38,7 @@ class RepositoryIntegrationTest {
         citiesRepository.save(tokyo);
         citiesRepository.save(seoul);
         citiesRepository.save(bangkok);
+        citiesRepository.flush();
 
         // When - Query using JDBC repository
         List<CityJpaEntity> allCitiesViaJdbc = citiesQueryRepository.findAll();
@@ -70,6 +71,7 @@ class RepositoryIntegrationTest {
         citiesRepository.save(city1);
         citiesRepository.save(city2);
         citiesRepository.save(city3);
+        citiesRepository.flush();
 
         // Verify initial state via JDBC
         List<CityJpaEntity> initialCities = citiesQueryRepository.findAll();
@@ -104,6 +106,7 @@ class RepositoryIntegrationTest {
         CityJpaEntity madrid = new CityJpaEntity("4", "Madrid", "Spain");
 
         citiesRepository.saveAll(List.of(paris1, paris2, london, madrid));
+        citiesRepository.flush();
 
         // Verify initial state
         List<CityJpaEntity> allCities = citiesQueryRepository.findAll();
@@ -192,6 +195,7 @@ class RepositoryIntegrationTest {
         CityJpaEntity zurich = new CityJpaEntity("3", "Zürich", "Switzerland");
 
         citiesRepository.saveAll(List.of(saoPaulo, mexicoCity, zurich));
+        citiesRepository.flush();
 
         // When - Query via JDBC
         Optional<CityJpaEntity> saoPauloViaJdbc = citiesQueryRepository.findByName("São Paulo");

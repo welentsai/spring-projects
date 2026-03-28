@@ -13,7 +13,7 @@ public interface CitiesRepository extends JpaRepository<CityJpaEntity, String> {
 
     // custom delete method
     @Transactional
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("DELETE FROM CityJpaEntity c WHERE c.name = :name")
     int deleteByNameReturningCount(@Param("name") String name);
 }
