@@ -1,0 +1,3 @@
+### List all videos from MinIO
+GET http://localhost:8080/api/v1/videos
+Accept: application/json

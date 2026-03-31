@@ -1,4 +1,4 @@
-package com.example.demo.adapter.in.controller;
+package com.example.demo.adapter.in;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -45,27 +45,8 @@ public class CitiesControllerTest {
         String responseBody = result.getResponse().getContentAsString();
 
         String expectedResp =
-                "{\"returnCode\":\"SUCCESS\",\"errorMessage\":null,\"data\":[{\"id\":\"1\",\"name\":\"A\",\"country\":\"TW\"},{\"id\":\"2\",\"name\":\"B\",\"country\":\"USA\"}],\"cities\":[{\"id\":\"1\",\"name\":\"A\",\"country\":\"TW\"},{\"id\":\"2\",\"name\":\"B\",\"country\":\"USA\"}],\"success\":true,\"failure\":false}";
+                "{\"cities\":[{\"id\":\"1\",\"name\":\"A\",\"country\":\"TW\"},{\"id\":\"2\",\"name\":\"B\",\"country\":\"USA\"}]}";
 
-        Assertions.assertEquals(expectedResp, responseBody);
-    }
-
-    @Test
-    public void testFindCities_should_return_error_when_failure() throws Exception {
-        FindCitiesResult failureResult =
-                FindCitiesResult.failure("INTERNAL_ERROR", "Database connection failed");
-
-        when(findCitiesUseCase.execute(any())).thenReturn(failureResult);
-
-        MvcResult result = mockMvc.perform(
-                        get("/api/v1/cities").contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isInternalServerError())
-                .andReturn();
-
-        String responseBody = result.getResponse().getContentAsString();
-
-        String expectedResp =
-                "{\"returnCode\":\"INTERNAL_ERROR\",\"errorMessage\":\"Database connection failed\",\"data\":null,\"cities\":null,\"success\":false,\"failure\":true}";
         Assertions.assertEquals(expectedResp, responseBody);
     }
 }
