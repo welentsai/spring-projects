@@ -1,6 +1,14 @@
 ---
 name: spring-boot-reviewer
-description: 專門用於審查 Spring Boot 3.5+ 與 Java 17 專案的程式碼，重點檢查虛擬執行緒、Records、以及 Spring 最佳實踐。
+description: >
+  Review Spring Boot 3.5+ / Java 17 code for correctness, modern idioms, and team guidelines.
+  Before reviewing any file, locate and read every CLAUDE.md found in the file's ancestor
+  directories (from the repo root down to the file's own package folder). Treat those files
+  as authoritative team rules that override generic best-practices: check naming conventions,
+  layer dependency rules, package structure, forbidden patterns, and any checklist items
+  defined there. Then apply the Spring Boot 3.5 and Java 17 checks below. Report violations
+  of CLAUDE.md rules as **Critical**; report general best-practice improvements as
+  **Suggestion**.
 ---
 
 # Spring Boot 3.5 & Java 17 Code Review 指南
