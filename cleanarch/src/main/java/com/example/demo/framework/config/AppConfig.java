@@ -1,4 +1,4 @@
-package com.example.demo.framework.di;
+package com.example.demo.framework.config;
 
 import com.example.demo.adapter.out.gateway.InlineRoutingGatewayImpl;
 import com.example.demo.adapter.out.gateway.PutLogGatewayImpl;

@@ -1,4 +1,4 @@
-package com.example.demo.framework.di;
+package com.example.demo.framework;
 
 import com.example.demo.usecase.exception.UserNotFoundException;
 
