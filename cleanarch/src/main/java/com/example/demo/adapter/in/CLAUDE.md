@@ -17,24 +17,32 @@ Adapter/In → Port/In (UseCase Interface)
 
 ## 3. 套件結構
 ```
-adapter.in/
-├── {Domain}Controller.java
-├── dto/
-│   ├── {Domain}Request.java
-│   └── {Domain}Response.java
-└── mapper/
-    └── {Domain}RequestMapper.java
+{projectroot}/
+├── exception/                         ← 所有自定義 Exception 統一放這裡（與 adapter 同層）
+│   └── BadRequestException.java
+└── adapter/
+    └── in/
+        ├── {Domain}Controller.java
+        ├── dto/
+        │   ├── {Domain}Request.java
+        │   └── {Domain}Response.java
+        └── mapper/
+            └── {Domain}RequestMapper.java
 ```
 
 ### 範例（order domain）
 ```
-adapter.in/
-├── OrderController.java
-├── dto/
-│   ├── CreateOrderRequest.java
-│   └── OrderResponse.java
-└── mapper/
-    └── OrderRequestMapper.java
+{projectroot}/
+├── exception/
+│   └── BadRequestException.java
+└── adapter/
+    └── in/
+        ├── OrderController.java
+        ├── dto/
+        │   ├── CreateOrderRequest.java
+        │   └── OrderResponse.java
+        └── mapper/
+            └── OrderRequestMapper.java
 ```
 
 ---
@@ -47,6 +55,7 @@ adapter.in/
 | Request DTO | `adapter.in.dto` | `{Domain}Request` | 使用 Java `record`，須實作 `validate()` |
 | Response DTO | `adapter.in.dto` | `{Domain}Response` | 使用 Java `record` |
 | Mapper | `adapter.in.mapper` | `{Domain}RequestMapper` | static methods，非 Spring bean |
+| 自定義 Exception | `exception` | `{Name}Exception` | 與 adapter 同層，所有層皆可引用 |
 
 ---
 
@@ -67,6 +76,8 @@ adapter.in/
 ### 5.2 正確範例
 ```java
 // package: adapter.in
+import exception.BadRequestException;
+
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
@@ -118,6 +129,9 @@ if (request.validate().isEmpty()) {
 
 // ❌ 禁止將 validate() 放在 UseCaseInput（驗證不得下放至 Application layer）
 input.validate().map(...);
+
+// ❌ 禁止在 exception package 以外自行定義 Exception
+// adapter.in 或其他任何 package 內不得出現自定義 Exception class
 ```
 
 ---
@@ -168,13 +182,35 @@ public class OrderRequestMapper {
 
 ---
 
-## 8. 快速檢核清單（Agent Checklist）
+## 8. Exception 規範
+
+- 所在 package：`exception`（與 `adapter` 同層，flat）
+- **禁止**在 `exception` package 以外的任何地方定義自定義 Exception class
+- Exception 可被所有層引用（Adapter、Application、Domain），不屬於任何單一層
+```java
+// package: exception
+public class BadRequestException extends RuntimeException {
+
+    public BadRequestException() {
+        super("Bad request");
+    }
+
+    public BadRequestException(String message) {
+        super(message);
+    }
+}
+```
+
+---
+
+## 9. 快速檢核清單（Agent Checklist）
 
 在產生或審查 Inbound Adapter 程式碼時，逐項確認：
 
 - [ ] Controller 位於 `adapter.in`（flat，不建立 domain subfolder）
 - [ ] Request / Response DTO 位於 `adapter.in.dto`
 - [ ] Mapper 位於 `adapter.in.mapper`
+- [ ] 所有自定義 Exception 位於 `exception`（與 `adapter` 同層），不在其他 package 自行定義
 - [ ] Controller 只依賴 UseCase interface，未注入 Service 或 Repository
 - [ ] 使用 Constructor Injection，無 `@Value` 直接用於 Controller
 - [ ] Request / Response DTO 為 Java `record`
