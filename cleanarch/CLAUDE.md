@@ -30,29 +30,53 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a **Clean Architecture** (Hexagonal/Ports-and-Adapters) Spring Boot application.
 
+- **Spring Boot:** 3.5.10
+- **Java:** 17
+- **Databases:** H2 in-memory (dual datasource: `primarydb`, `secondarydb`)
+- **ORM:** Spring Data JPA (writes) + JdbcClient (reads)
+- **External services:** MinIO (video object storage)
+- **Resilience:** Resilience4j 2.3.0 (circuit breaker / rate limiter)
+- **Architecture tests:** ArchUnit 1.4.1
+- **Code format:** Spotless + Palantir Java Format (AOSP style)
+
 ### Layer Structure
 
 ```
 com.example.demo/
-├── adapter/in/controller/        # REST endpoints (inbound adapters)
+├── adapter/in/                   # REST controllers (inbound adapters) — no controller/ subfolder
+│   ├── dto/                      # Request/Response DTOs
+│   └── mapper/                   # Request → Input mappers
 ├── adapter/out/repository/       # JdbcClient query implementations (outbound adapters)
 ├── adapter/out/gateway/          # External service implementations (outbound adapters)
-├── usecase/ports/in/             # Use case interfaces + Input/Result DTOs
+├── usecase/ports/in/             # Use case interfaces + Input/Result types
+│   ├── dto/                      # CityDto, VideoDto (use-case-level data transfer)
 │   └── impl/                     # Use case implementations (no Spring annotations)
 ├── usecase/ports/out/repository/ # Repository port interfaces
-├── usecase/ports/out/gateway/    # Gateway port interfaces
+├── usecase/ports/out/gateway/    # Gateway port interfaces + Input/Output types
 ├── usecase/ports/out/entity/     # JPA entities
 ├── domain/model/                 # Pure Java domain objects (records, no Spring deps)
 ├── framework/di/                 # Spring @Configuration classes and bean wiring
+│   ├── config/                   # AppConfig, VideoConfig
 │   └── dynamicdatasource/        # AbstractRoutingDataSource for dual-DB routing
+├── exception/                    # BadRequestException, UserNotFoundException
+├── util/                         # Shared utilities
 └── system/                       # Cross-cutting: AOP logging, HTTP filter, MDC context
 ```
+
+### API Endpoints
+
+| Method | Path | Controller | Use Case |
+|--------|------|------------|----------|
+| GET | `/api/v1/cities` | `CitiesController` | `FindCitiesUseCase` |
+| GET | `/api/v1/videos` | `VideoController` | `ListVideosUseCase` |
 
 ### Dependency Flow
 
 `Controller → UseCase (interface) → Repository/Gateway (interfaces) → Implementations`
 
 The domain and use case layers have **no Spring annotations** (`@Service`, `@Component`, etc.). All wiring happens in `framework/di/`.
+
+> **Known violation:** `FindCitiesUseCaseImpl` currently imports `DataSourceContextHolder` and `DataSourceKey` from `framework.di.dynamicdatasource`. This breaks the dependency rule (usecase → framework). The routing decision should be pushed into the gateway layer instead.
 
 ### Key Architectural Patterns
 
@@ -69,11 +93,21 @@ The domain and use case layers have **no Spring annotations** (`@Service`, `@Com
 
 **Structured Logging:** `LoggingAspect` (AOP) wraps all gateway calls to log duration/errors. `LoggingContext` uses ThreadLocal + MDC to propagate `requestId` and `userId` through the call stack.
 
+**Request Validation Chain:** Controllers use a fluent monad-style pipeline instead of exception-first validation:
+```java
+new XxxRequest(...)
+    .validate()          // returns Optional<XxxRequest>
+    .map(mapper::toInput)
+    .map(useCase::execute)
+    .map(mapper::toResponse)
+    .orElseThrow(BadRequestException::new);
+```
+
 ## Naming Conventions (enforced by ArchUnit tests)
 
 | Layer | Suffix | Location |
 |-------|--------|----------|
-| REST controllers | `Controller` | `adapter.in.controller` |
+| REST controllers | `Controller` | `adapter.in` |
 | Use case interfaces | `UseCase` | `usecase.ports.in` |
 | Use case implementations | `UseCaseImpl` | `usecase.ports.in.impl` |
 | Repository interfaces | `Repository` | `usecase.ports.out.repository` |
