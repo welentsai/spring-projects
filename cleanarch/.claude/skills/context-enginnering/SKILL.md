@@ -92,6 +92,10 @@ Based on what the user is asking, pick the appropriate output mode:
 | Analyze structure or explain the project | → [Structure Analysis](#structure-analysis) |
 | Help add a new feature | → [Feature Development Guide](#feature-development-guide) |
 | Record an architecture decision | → [ADR Generation](#adr-generation) |
+| Show code pattern for a specific layer | → [Code Patterns](#code-patterns) |
+| Show module rules for a specific package | → [Module Rules](#module-rules) |
+| Generate package-level CLAUDE.md files | → [Generate Package CLAUDE.md](#generate-package-claudemd) |
+| Refresh stale package CLAUDE.md files | → [Refresh Mode](#refresh-mode) |
 | Full context dump for new AI session | → Run all outputs |
 
 ---
@@ -255,8 +259,154 @@ Number ADRs sequentially. Check existing ADRs in `docs/adr/` before assigning a 
 
 ---
 
+## Generate Package CLAUDE.md
+
+當使用者要求「生成 package CLAUDE.md」或「為某個 package 建立 context」時執行此流程。
+
+### 流程
+
+**Step 1：確認目標 package**
+
+詢問使用者（或從 context 推斷）要為哪個 package 生成 CLAUDE.md。
+若使用者說「全部」，依序處理下表所有 package。
+
+| Package | 目標路徑 |
+|---------|---------|
+| `adapter.in` | `src/main/java/com/example/demo/adapter/in/CLAUDE.md` |
+| `adapter.out.gateway` | `src/main/java/com/example/demo/adapter/out/gateway/CLAUDE.md` |
+| `adapter.out.repository` | `src/main/java/com/example/demo/adapter/out/repository/CLAUDE.md` |
+| `usecase.ports.in` | `src/main/java/com/example/demo/usecase/ports/in/CLAUDE.md` |
+| `usecase.ports.in.impl` | `src/main/java/com/example/demo/usecase/ports/in/impl/CLAUDE.md` |
+| `usecase.ports.out.gateway` | `src/main/java/com/example/demo/usecase/ports/out/gateway/CLAUDE.md` |
+| `domain.model` | `src/main/java/com/example/demo/domain/model/CLAUDE.md` |
+| `framework.di` | `src/main/java/com/example/demo/framework/di/CLAUDE.md` |
+
+**Step 2：掃描 package 取得 canonical example**
+
+```bash
+python .claude/skills/context-enginnering/scripts/scan_package.py <package-absolute-path>
+```
+
+**Step 3：萃取 canonical pattern**
+
+從 scan 輸出中：
+1. 找出最具代表性的 class（`@RestController` / `implements XxxGateway` / `implements XxxUseCase` 等）
+2. 抽取結構骨架：package 宣告、主要 import、class 簽章、field、constructor、主要 method 簽章
+3. 將完整實作細節省略為 `// ...`，保留結構
+
+**Step 4：依 template 生成 CLAUDE.md**
+
+讀取 `references/templates/package-claude-md.md`，填入：
+- §1 職責定義（對照 `references/modules/{module}.md`）
+- §2 依賴方向（allowed / forbidden imports）
+- §3 套件結構（從 scan 結果的目錄樹）
+- §4 命名規則（對照 `references/modules/{module}.md` 的命名表）
+- §5.2 正確範例（從 Step 3 萃取的骨架）
+- §5.3 禁止事項（從 `references/modules/{module}.md` 的 forbidden 清單）
+- §6 快速檢核清單
+
+**Step 5：寫入檔案**
+
+將生成的 CLAUDE.md 寫入對應的 package 目錄。
+若已存在，先比較差異，只在內容有意義的變化時才覆蓋。
+
+---
+
+## Refresh Mode
+
+當使用者要求「重新整理 CLAUDE.md」、「更新 context」或「程式碼有變動後同步 CLAUDE.md」時執行。
+
+### 流程
+
+**Step 1：找出所有現有的 package CLAUDE.md**
+
+```bash
+find /Users/welentsai/Workspace/spring-projects/cleanarch/src -name "CLAUDE.md" | sort
+```
+
+**Step 2：逐一檢查是否過時**
+
+對每個找到的 CLAUDE.md，執行：
+
+```bash
+bash .claude/skills/context-enginnering/scripts/scan_package.sh <package-dir>
+```
+
+與現有 CLAUDE.md 比對，判斷以下情況是否發生：
+- 有新的 `.java` 檔案加入（新 class）
+- 有 `.java` 檔案被移除
+- 現有的 canonical example class 已被修改（import、method 簽章變化）
+- 現有 CLAUDE.md 的禁止 import 清單與 `references/modules/` 不一致
+
+**Step 3：分類處理**
+
+| 狀態 | 動作 |
+|------|------|
+| 無變化 | 跳過，輸出「✓ up-to-date」 |
+| 新 class 加入，但 canonical pattern 不變 | 只更新 §3 套件結構 |
+| Canonical example class 有結構變化 | 重新萃取 §5.2，更新後輸出 diff |
+| Package 完全重組（大量新增/刪除） | 重新執行完整 Generate 流程 |
+
+**Step 4：輸出 Refresh 報告**
+
+```
+Refresh Report — 2026-04-11
+─────────────────────────────────────────────────
+✓ adapter/in/CLAUDE.md              up-to-date
+✎ adapter/out/gateway/CLAUDE.md     updated (new file: XxxGatewayImpl.java)
+✓ adapter/out/repository/CLAUDE.md  up-to-date
+✎ usecase/ports/in/CLAUDE.md        updated (canonical example: FindCitiesInput changed)
+✓ usecase/ports/in/impl/CLAUDE.md   up-to-date
+✓ usecase/ports/out/gateway/CLAUDE.md up-to-date
+✓ domain/model/CLAUDE.md            up-to-date
+✓ framework/di/CLAUDE.md            up-to-date
+─────────────────────────────────────────────────
+Updated: 2 / 8
+```
+
+---
+
+## Code Patterns
+
+When the user asks "how do I write a controller / use case / gateway / repository" or wants to
+add new code and needs a template, load the relevant pattern file and walk them through it.
+
+| Layer / Component | Pattern File |
+|-------------------|-------------|
+| REST Controller + Request/Response DTOs + Mapper | `references/patterns/controller.md` |
+| Use Case interface + Input + Result + DTO | `references/patterns/usecase-interface.md` |
+| Use Case implementation | `references/patterns/usecase-impl.md` |
+| Gateway interface + Input + Output records | `references/patterns/gateway-interface.md` |
+| Gateway implementation | `references/patterns/gateway-impl.md` |
+| Repository interface (reads + writes) | `references/patterns/repository-interface.md` |
+| Repository implementation (JdbcClient) | `references/patterns/repository-impl.md` |
+| JPA Entity | `references/patterns/jpa-entity.md` |
+| Domain model (record / class) | `references/patterns/domain-model.md` |
+| DI wiring in framework/di | `references/patterns/di-wiring.md` |
+
+---
+
+## Module Rules
+
+When reviewing or generating code for a specific package, load the corresponding module rules
+file to check allowed/forbidden imports and constraints before writing or suggesting code.
+
+| Package | Module Rules File |
+|---------|------------------|
+| `adapter.in` (controllers, DTOs, mappers) | `references/modules/adapter-in.md` |
+| `adapter.out.gateway` | `references/modules/adapter-out-gateway.md` |
+| `adapter.out.repository` | `references/modules/adapter-out-repository.md` |
+| `usecase.ports.in` + `usecase.ports.in.impl` | `references/modules/usecase-ports-in.md` |
+| `usecase.ports.out` (gateway, repository, entity) | `references/modules/usecase-ports-out.md` |
+| `domain.model` | `references/modules/domain.md` |
+| `framework.di` + `framework.config` | `references/modules/framework-di.md` |
+
+---
+
 ## Reference Files
 
 See `references/` for additional detail:
 - `references/conventions.md` — Naming conventions and patterns (populated after first scan)
 - `references/layer-rules.md` — Detailed dependency rules and violation examples
+- `references/patterns/` — Per-component canonical code patterns extracted from actual codebase
+- `references/modules/` — Per-package rules: allowed/forbidden imports, constraints, checklists
