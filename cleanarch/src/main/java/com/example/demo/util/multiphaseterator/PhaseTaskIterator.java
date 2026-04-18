@@ -4,10 +4,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.Executor;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -47,6 +48,7 @@ public final class PhaseTaskIterator<K, V> {
     // ── Entry point ───────────────────────────────────────────────────────────
 
     public static <K> PhaseStage<K> over(List<K> phases) {
+        Objects.requireNonNull(phases, "phases must not be null");
         return new PhaseStage<>(phases);
     }
 
@@ -97,31 +99,28 @@ public final class PhaseTaskIterator<K, V> {
      * Results preserve the original phase ordering regardless of completion order.
      */
     public List<PhaseTaskOutput<K, V>> executeParallel() {
-        // Fire all futures upfront, recording each task's logical start time
-        List<Instant> startTimes = new ArrayList<>();
-        List<Map.Entry<K, CompletableFuture<V>>> futures = new ArrayList<>();
-
+        List<PhaseEntry<K, V>> entries = new ArrayList<>();
         for (K phase : phases) {
-            startTimes.add(Instant.now());
-            futures.add(Map.entry(phase, taskMapper.apply(phase)));
+            entries.add(new PhaseEntry<>(phase, taskMapper.apply(phase), Instant.now()));
         }
 
         List<PhaseTaskOutput<K, V>> results = new ArrayList<>();
         boolean stopped = false;
 
-        for (int i = 0; i < futures.size(); i++) {
-            K phase = futures.get(i).getKey();
+        for (PhaseEntry<K, V> entry : entries) {
             if (stopped) {
-                results.add(PhaseTaskOutput.skipped(phase));
+                results.add(PhaseTaskOutput.skipped(entry.phase()));
                 continue;
             }
-            PhaseTaskOutput<K, V> output = awaitFuture(phase, futures.get(i).getValue(), startTimes.get(i));
+            PhaseTaskOutput<K, V> output = awaitFuture(entry.phase(), entry.future(), entry.startedAt());
             results.add(output);
             if (earlyStop && output.isFailed()) stopped = true;
         }
 
         return List.copyOf(results);
     }
+
+    private record PhaseEntry<K, V>(K phase, CompletableFuture<V> future, Instant startedAt) {}
 
     // ── Internal helpers ──────────────────────────────────────────────────────
 
@@ -136,10 +135,10 @@ public final class PhaseTaskIterator<K, V> {
             Duration duration = Duration.between(startedAt, Instant.now());
             boolean passed = successCriteria.test(value);
             PhaseTaskStatus status = passed ? PhaseTaskStatus.SUCCEEDED : PhaseTaskStatus.FAILED_BY_CRITERIA;
-            return new PhaseTaskOutput<>(phase, status, Optional.ofNullable(value), duration);
+            return new PhaseTaskOutput<>(phase, status, value, duration);
         } catch (CompletionException e) {
             Duration duration = Duration.between(startedAt, Instant.now());
-            return new PhaseTaskOutput<>(phase, PhaseTaskStatus.FAILED_BY_EXCEPTION, Optional.empty(), duration);
+            return new PhaseTaskOutput<>(phase, PhaseTaskStatus.FAILED_BY_EXCEPTION, null, duration);
         }
     }
 
@@ -154,17 +153,26 @@ public final class PhaseTaskIterator<K, V> {
         }
 
         /**
-         * Maps each phase key to a synchronous task. The function is wrapped in
-         * {@link CompletableFuture#supplyAsync} using the common fork-join pool,
-         * so {@link PhaseTaskIterator#executeParallel()} runs tasks truly in parallel.
-         *
-         * <p>Any exception thrown inside the function is captured as
-         * {@link PhaseTaskStatus#FAILED_BY_EXCEPTION} — callers do not need to handle it.
+         * Maps each phase key to a synchronous task using the common fork-join pool.
+         * Suitable for CPU-bound work. For I/O-bound tasks use {@link #map(Function, Executor)}
+         * or {@link #mapAsync(Function)} to avoid thread starvation.
          */
         public <V> PhaseTaskIterator<K, V> map(Function<K, V> taskMapper) {
             return new PhaseTaskIterator<>(
                     phases,
                     phase -> CompletableFuture.supplyAsync(() -> taskMapper.apply(phase)),
+                    v -> true,
+                    false);
+        }
+
+        /**
+         * Maps each phase key to a synchronous task using the provided executor.
+         * Use this for I/O-bound tasks (DB, HTTP, file) to avoid starving the common fork-join pool.
+         */
+        public <V> PhaseTaskIterator<K, V> map(Function<K, V> taskMapper, Executor executor) {
+            return new PhaseTaskIterator<>(
+                    phases,
+                    phase -> CompletableFuture.supplyAsync(() -> taskMapper.apply(phase), executor),
                     v -> true,
                     false);
         }

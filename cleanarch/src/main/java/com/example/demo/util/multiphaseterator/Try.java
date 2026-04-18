@@ -43,21 +43,18 @@ public sealed interface Try<T> permits Try.Success, Try.Failure {
     /** @throws IllegalStateException wrapping the original cause */
     default T getOrThrow() {
         if (this instanceof Success<T> s) return s.value();
-        if (this instanceof Failure<T> f)
-            throw new IllegalStateException(f.cause().getMessage(), f.cause());
-        throw new IllegalStateException("Unknown Try state");
+        var f = (Failure<T>) this;
+        throw new IllegalStateException(f.cause().getMessage(), f.cause());
     }
 
     default <U> Try<U> map(Function<T, U> mapper) {
         if (this instanceof Success<T> s) return Try.of(() -> mapper.apply(s.value()));
-        if (this instanceof Failure<T> f) return new Failure<>(f.cause());
-        throw new IllegalStateException("Unknown Try state");
+        return new Failure<>(((Failure<T>) this).cause());
     }
 
     default <U> Try<U> flatMap(Function<T, Try<U>> mapper) {
         if (this instanceof Success<T> s) return mapper.apply(s.value());
-        if (this instanceof Failure<T> f) return new Failure<>(f.cause());
-        throw new IllegalStateException("Unknown Try state");
+        return new Failure<>(((Failure<T>) this).cause());
     }
 
     default Try<T> onSuccess(Consumer<T> action) {

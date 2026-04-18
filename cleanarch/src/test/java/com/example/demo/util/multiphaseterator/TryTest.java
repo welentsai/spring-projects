@@ -4,16 +4,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
 class TryTest {
 
     // ── factories ─────────────────────────────────────────────────────────────
 
     @Test
-    void success_isSuccess() {
+    void success_returnsTrue_forIsSuccess() {
         assertThat(Try.success("ok").isSuccess()).isTrue();
+    }
+
+    @Test
+    void success_returnsFalse_forIsFailure() {
         assertThat(Try.success("ok").isFailure()).isFalse();
     }
 
@@ -33,7 +35,8 @@ class TryTest {
     void of_catchesException_returnsFailure() {
         Try<Integer> t = Try.of(() -> { throw new IllegalArgumentException("bad"); });
         assertThat(t.isFailure()).isTrue();
-        assertThat(((Try.Failure<Integer>) t).cause()).isInstanceOf(IllegalArgumentException.class);
+        assertThat(t).isInstanceOfSatisfying(Try.Failure.class,
+                f -> assertThat(f.cause()).isInstanceOf(IllegalArgumentException.class));
     }
 
     // ── getOrElse ─────────────────────────────────────────────────────────────
@@ -75,7 +78,8 @@ class TryTest {
         RuntimeException cause = new RuntimeException("original");
         Try<String> result = Try.<String>failure(cause).map(s -> { throw new AssertionError("should not run"); });
         assertThat(result.isFailure()).isTrue();
-        assertThat(((Try.Failure<String>) result).cause()).isSameAs(cause);
+        assertThat(result).isInstanceOfSatisfying(Try.Failure.class,
+                f -> assertThat(f.cause()).isSameAs(cause));
     }
 
     @Test
@@ -98,7 +102,8 @@ class TryTest {
         Try<Integer> result = Try.<String>failure(cause)
                 .flatMap(s -> Try.success(Integer.parseInt(s)));
         assertThat(result.isFailure()).isTrue();
-        assertThat(((Try.Failure<Integer>) result).cause()).isSameAs(cause);
+        assertThat(result).isInstanceOfSatisfying(Try.Failure.class,
+                f -> assertThat(f.cause()).isSameAs(cause));
     }
 
     // ── onSuccess / onFailure ─────────────────────────────────────────────────
