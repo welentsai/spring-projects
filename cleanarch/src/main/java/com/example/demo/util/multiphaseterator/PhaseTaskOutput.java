@@ -1,6 +1,5 @@
 package com.example.demo.util.multiphaseterator;
 
-import jakarta.annotation.Nullable;
 import java.time.Duration;
 import java.util.Optional;
 
@@ -13,12 +12,11 @@ import java.util.Optional;
 public record PhaseTaskOutput<K, V>(
         K phase,
         PhaseTaskStatus status,
-        @Nullable Try<V> result, // null when status is SKIPPED
-        Duration duration // Duration.ZERO when SKIPPED
-        ) {
+        Optional<V> result,
+        Duration duration) {
 
     static <K, V> PhaseTaskOutput<K, V> skipped(K phase) {
-        return new PhaseTaskOutput<>(phase, PhaseTaskStatus.SKIPPED, null, Duration.ZERO);
+        return new PhaseTaskOutput<>(phase, PhaseTaskStatus.SKIPPED, Optional.empty(), Duration.ZERO);
     }
 
     public boolean isSucceeded() {
@@ -35,6 +33,6 @@ public record PhaseTaskOutput<K, V>(
 
     /** Returns the task output value, or empty if the phase failed or was skipped. */
     public Optional<V> value() {
-        return result != null ? result.toOptional() : Optional.empty();
+        return result;
     }
 }

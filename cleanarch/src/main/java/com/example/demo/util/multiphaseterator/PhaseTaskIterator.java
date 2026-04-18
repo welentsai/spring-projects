@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.function.Function;
@@ -16,7 +17,7 @@ import java.util.function.Predicate;
  * <pre>{@code
  * List<PhaseTaskOutput<String, DeployResult>> results = PhaseTaskIterator
  *     .over(List.of("dev", "staging", "prod"))
- *     .map(phase -> CompletableFuture.supplyAsync(() -> deploy(phase)))
+ *     .map(phase -> deploy(phase))
  *     .isSuccessCriteria(r -> r.exitCode() == 0)
  *     .stopEarly()       // optional — skip remaining phases on first failure
  *     .execute();        // sequential; use executeParallel() to fire all at once
@@ -135,11 +136,10 @@ public final class PhaseTaskIterator<K, V> {
             Duration duration = Duration.between(startedAt, Instant.now());
             boolean passed = successCriteria.test(value);
             PhaseTaskStatus status = passed ? PhaseTaskStatus.SUCCEEDED : PhaseTaskStatus.FAILED_BY_CRITERIA;
-            return new PhaseTaskOutput<>(phase, status, Try.success(value), duration);
+            return new PhaseTaskOutput<>(phase, status, Optional.ofNullable(value), duration);
         } catch (CompletionException e) {
             Duration duration = Duration.between(startedAt, Instant.now());
-            Throwable cause = e.getCause() != null ? e.getCause() : e;
-            return new PhaseTaskOutput<>(phase, PhaseTaskStatus.FAILED_BY_EXCEPTION, Try.failure(cause), duration);
+            return new PhaseTaskOutput<>(phase, PhaseTaskStatus.FAILED_BY_EXCEPTION, Optional.empty(), duration);
         }
     }
 

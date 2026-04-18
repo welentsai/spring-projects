@@ -108,7 +108,7 @@ class PhaseTaskIteratorTest {
     void execute_stopEarly_skipsRemainingAfterException() {
         List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
                 .over(PHASES)
-                .<String>map(phase -> {
+                .map(phase -> {
                     if (phase.equals("alpha")) throw new RuntimeException("boom");
                     return "ok";
                 })
