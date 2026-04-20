@@ -383,19 +383,22 @@ class PhaseTaskIteratorTest {
             ApmConfigHolder holder = new ApmConfigHolder();
             holder.setApmPhaseList(List.of("alpha"));
 
-            PhaseTaskIterator<String, String> iterator = PhaseTaskIterator
+            PhaseTaskIterator<String, ?> iterator = PhaseTaskIterator
                     .over(PHASES)
-                    .skipPhases(holder::getApmPhaseList)
-                    .map(phase -> "done");
+                    .skipPhases(holder::getApmPhaseList);
 
-            List<PhaseTaskOutput<String, String>> first = iterator.execute();
+            List<PhaseTaskOutput<String, String>> first = iterator
+                    .map(phase -> "done")
+                    .isSuccessCriteria( v -> v.equals("done"))
+                    .execute();
+
             assertThat(first.get(0).isSkipped()).isTrue();  // alpha skipped
             assertThat(first.get(1).isSucceeded()).isTrue();
             assertThat(first.get(2).isSucceeded()).isTrue();
 
             holder.setApmPhaseList(List.of("gamma"));
 
-            List<PhaseTaskOutput<String, String>> second = iterator.execute();
+            List<PhaseTaskOutput<String, String>> second = iterator.map(phase -> "done").execute();
             assertThat(second.get(0).isSucceeded()).isTrue(); // alpha now runs
             assertThat(second.get(2).isSkipped()).isTrue();   // gamma now skipped
         }
