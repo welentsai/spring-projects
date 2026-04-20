@@ -1,12 +1,16 @@
 package com.example.demo.util.multiphaseterator;
 
+import jakarta.annotation.Nullable;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
@@ -30,16 +34,19 @@ import java.util.function.Predicate;
 public final class PhaseTaskIterator<K, V> {
 
     private final List<K> phases;
+    private final Supplier<Set<K>> skipPhases;
     private final Function<K, CompletableFuture<V>> taskMapper;
     private final Predicate<V> successCriteria;
     private final boolean earlyStop;
 
     private PhaseTaskIterator(
             List<K> phases,
+            Supplier<Set<K>> skipPhases,
             Function<K, CompletableFuture<V>> taskMapper,
             Predicate<V> successCriteria,
             boolean earlyStop) {
         this.phases = List.copyOf(phases);
+        this.skipPhases = skipPhases;
         this.taskMapper = taskMapper;
         this.successCriteria = successCriteria;
         this.earlyStop = earlyStop;
@@ -60,7 +67,7 @@ public final class PhaseTaskIterator<K, V> {
      * Defaults to always-true if not set.
      */
     public PhaseTaskIterator<K, V> isSuccessCriteria(Predicate<V> criteria) {
-        return new PhaseTaskIterator<>(phases, taskMapper, criteria, earlyStop);
+        return new PhaseTaskIterator<>(phases, skipPhases, taskMapper, criteria, earlyStop);
     }
 
     /**
@@ -71,18 +78,19 @@ public final class PhaseTaskIterator<K, V> {
      * stops <em>collecting</em> results, not background task execution.
      */
     public PhaseTaskIterator<K, V> stopEarly() {
-        return new PhaseTaskIterator<>(phases, taskMapper, successCriteria, true);
+        return new PhaseTaskIterator<>(phases, skipPhases, taskMapper, successCriteria, true);
     }
 
     // ── Terminal operations ───────────────────────────────────────────────────
 
     /** Runs phases one at a time, in order. Waits for each to complete before starting the next. */
     public List<PhaseTaskOutput<K, V>> execute() {
+        Set<K> skip = skipPhases.get();
         List<PhaseTaskOutput<K, V>> results = new ArrayList<>();
         boolean stopped = false;
 
         for (K phase : phases) {
-            if (stopped) {
+            if (stopped || skip.contains(phase)) {
                 results.add(PhaseTaskOutput.skipped(phase));
                 continue;
             }
@@ -99,16 +107,20 @@ public final class PhaseTaskIterator<K, V> {
      * Results preserve the original phase ordering regardless of completion order.
      */
     public List<PhaseTaskOutput<K, V>> executeParallel() {
+        Set<K> skip = skipPhases.get();
         List<PhaseEntry<K, V>> entries = new ArrayList<>();
         for (K phase : phases) {
-            entries.add(new PhaseEntry<>(phase, taskMapper.apply(phase), Instant.now()));
+            CompletableFuture<V> future = skip.contains(phase)
+                    ? null
+                    : taskMapper.apply(phase);
+            entries.add(new PhaseEntry<>(phase, future, Instant.now()));
         }
 
         List<PhaseTaskOutput<K, V>> results = new ArrayList<>();
         boolean stopped = false;
 
         for (PhaseEntry<K, V> entry : entries) {
-            if (stopped) {
+            if (stopped || entry.future() == null) {
                 results.add(PhaseTaskOutput.skipped(entry.phase()));
                 continue;
             }
@@ -120,7 +132,7 @@ public final class PhaseTaskIterator<K, V> {
         return List.copyOf(results);
     }
 
-    private record PhaseEntry<K, V>(K phase, CompletableFuture<V> future, Instant startedAt) {}
+    private record PhaseEntry<K, V>(K phase, @Nullable CompletableFuture<V> future, Instant startedAt) {}
 
     // ── Internal helpers ──────────────────────────────────────────────────────
 
@@ -147,9 +159,34 @@ public final class PhaseTaskIterator<K, V> {
     public static final class PhaseStage<K> {
 
         private final List<K> phases;
+        private final Supplier<Set<K>> skipPhases;
 
         private PhaseStage(List<K> phases) {
             this.phases = phases;
+            this.skipPhases = Set::of;
+        }
+
+        private PhaseStage(List<K> phases, Supplier<Set<K>> skipPhases) {
+            this.phases = phases;
+            this.skipPhases = skipPhases;
+        }
+
+        /** Phases in this list are marked SKIPPED and never executed (snapshot at call time). */
+        public PhaseStage<K> skipPhases(List<K> toSkip) {
+            Objects.requireNonNull(toSkip, "toSkip must not be null");
+            Set<K> snapshot = Set.copyOf(toSkip);
+            return new PhaseStage<>(phases, () -> snapshot);
+        }
+
+        /**
+         * Live overload: the supplier is called fresh on every {@link #execute()} /
+         * {@link #executeParallel()}, so changes to the source are reflected without
+         * rebuilding the iterator. Accepts any {@code Collection<? extends K>} supplier,
+         * e.g. {@code apmConfigHolder::getApmPhaseList} when {@code K=String}.
+         */
+        public PhaseStage<K> skipPhases(Supplier<? extends Collection<? extends K>> skipPhasesSupplier) {
+            Objects.requireNonNull(skipPhasesSupplier, "skipPhasesSupplier must not be null");
+            return new PhaseStage<>(phases, () -> Set.copyOf(skipPhasesSupplier.get()));
         }
 
         /**
@@ -160,6 +197,7 @@ public final class PhaseTaskIterator<K, V> {
         public <V> PhaseTaskIterator<K, V> map(Function<K, V> taskMapper) {
             return new PhaseTaskIterator<>(
                     phases,
+                    skipPhases,
                     phase -> CompletableFuture.supplyAsync(() -> taskMapper.apply(phase)),
                     v -> true,
                     false);
@@ -172,6 +210,7 @@ public final class PhaseTaskIterator<K, V> {
         public <V> PhaseTaskIterator<K, V> map(Function<K, V> taskMapper, Executor executor) {
             return new PhaseTaskIterator<>(
                     phases,
+                    skipPhases,
                     phase -> CompletableFuture.supplyAsync(() -> taskMapper.apply(phase), executor),
                     v -> true,
                     false);
@@ -182,7 +221,7 @@ public final class PhaseTaskIterator<K, V> {
          * virtual threads, reactive pipelines, etc.
          */
         public <V> PhaseTaskIterator<K, V> mapAsync(Function<K, CompletableFuture<V>> taskMapper) {
-            return new PhaseTaskIterator<>(phases, taskMapper, v -> true, false);
+            return new PhaseTaskIterator<>(phases, skipPhases, taskMapper, v -> true, false);
         }
     }
 }

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -275,6 +276,241 @@ class PhaseTaskIteratorTest {
                     .execute();
 
             assertThat(results.get(0).status()).isEqualTo(PhaseTaskStatus.FAILED_BY_EXCEPTION);
+        }
+    }
+
+    @Nested
+    class SkipPhases {
+
+        @Test
+        void skippedPhases_areMarkedSkipped_andNotExecuted() {
+            List<String> executed = new ArrayList<>();
+            PhaseTaskIterator
+                    .over(PHASES)
+                    .skipPhases(List.of("alpha"))
+                    .map(phase -> { executed.add(phase); return "done"; })
+                    .execute();
+
+            assertThat(executed).containsExactly("beta", "gamma");
+        }
+
+        @Test
+        void skippedPhases_stillAppearInResults_withSkippedStatus() {
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
+                    .over(PHASES)
+                    .skipPhases(List.of("alpha"))
+                    .map(phase -> "done")
+                    .execute();
+
+            assertThat(results).hasSize(3);
+            assertThat(results.get(0).phase()).isEqualTo("alpha");
+            assertThat(results.get(0).isSkipped()).isTrue();
+            assertThat(results.get(1).isSucceeded()).isTrue();
+            assertThat(results.get(2).isSucceeded()).isTrue();
+        }
+
+        @Test
+        void skippedOutput_hasEmptyValue_andZeroDuration() {
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
+                    .over(PHASES)
+                    .skipPhases(List.of("beta"))
+                    .map(phase -> "done")
+                    .execute();
+
+            PhaseTaskOutput<String, String> skipped = results.get(1);
+            assertThat(skipped.value()).isEmpty();
+            assertThat(skipped.duration().isZero()).isTrue();
+        }
+
+        @Test
+        void skipAllPhases_returnsAllSkipped() {
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
+                    .over(PHASES)
+                    .skipPhases(PHASES)
+                    .map(phase -> "unreachable")
+                    .execute();
+
+            assertThat(results).allMatch(PhaseTaskOutput::isSkipped);
+        }
+
+        @Test
+        void emptySkipList_executesAllPhases() {
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
+                    .over(PHASES)
+                    .skipPhases(List.of())
+                    .map(phase -> "done")
+                    .execute();
+
+            assertThat(results).allMatch(PhaseTaskOutput::isSucceeded);
+        }
+
+        @Test
+        void skipPhases_worksWithExecuteParallel() {
+            List<String> executed = new ArrayList<>();
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
+                    .over(PHASES)
+                    .skipPhases(List.of("gamma"))
+                    .map(phase -> { executed.add(phase); return "done"; })
+                    .executeParallel();
+
+            assertThat(executed).doesNotContain("gamma");
+            assertThat(results.get(2).isSkipped()).isTrue();
+            assertThat(results.get(0).isSucceeded()).isTrue();
+            assertThat(results.get(1).isSucceeded()).isTrue();
+        }
+
+        @Test
+        void skipPhases_combinesWithStopEarly() {
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
+                    .over(PHASES)
+                    .skipPhases(List.of("alpha"))
+                    .map(phase -> phase.equals("beta") ? "fail" : "ok")
+                    .isSuccessCriteria(v -> v.equals("ok"))
+                    .stopEarly()
+                    .execute();
+
+            assertThat(results.get(0).isSkipped()).isTrue();   // alpha — explicitly skipped
+            assertThat(results.get(1).status()).isEqualTo(PhaseTaskStatus.FAILED_BY_CRITERIA); // beta
+            assertThat(results.get(2).isSkipped()).isTrue();   // gamma — stopped early
+        }
+    }
+
+    @Nested
+    class SkipPhasesSupplier {
+
+        @Test
+        void supplier_isEvaluatedFreshOnEachExecute() {
+            ApmConfigHolder holder = new ApmConfigHolder();
+            holder.setApmPhaseList(List.of("alpha"));
+
+            PhaseTaskIterator<String, String> iterator = PhaseTaskIterator
+                    .over(PHASES)
+                    .skipPhases(holder::getApmPhaseList)
+                    .map(phase -> "done");
+
+            List<PhaseTaskOutput<String, String>> first = iterator.execute();
+            assertThat(first.get(0).isSkipped()).isTrue();  // alpha skipped
+            assertThat(first.get(1).isSucceeded()).isTrue();
+            assertThat(first.get(2).isSucceeded()).isTrue();
+
+            holder.setApmPhaseList(List.of("gamma"));
+
+            List<PhaseTaskOutput<String, String>> second = iterator.execute();
+            assertThat(second.get(0).isSucceeded()).isTrue(); // alpha now runs
+            assertThat(second.get(2).isSkipped()).isTrue();   // gamma now skipped
+        }
+
+        @Test
+        void supplier_emptyList_executesAllPhases() {
+            ApmConfigHolder holder = new ApmConfigHolder();
+
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
+                    .over(PHASES)
+                    .skipPhases(holder::getApmPhaseList)
+                    .map(phase -> "done")
+                    .execute();
+
+            assertThat(results).allMatch(PhaseTaskOutput::isSucceeded);
+        }
+
+        @Test
+        void supplier_skippedPhases_areNotDeployed() {
+            ApmConfigHolder holder = new ApmConfigHolder();
+            holder.setApmPhaseList(List.of("beta"));
+
+            List<String> deployed = new ArrayList<>();
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
+                    .over(PHASES)
+                    .skipPhases(holder::getApmPhaseList)
+                    .map(phase -> { deployed.add(phase); return "deployed"; })
+                    .execute();
+
+            assertThat(deployed).containsExactly("alpha", "gamma");
+            assertThat(results.get(1).isSkipped()).isTrue();
+            assertThat(results.get(1).phase()).isEqualTo("beta");
+        }
+
+        @Test
+        void supplier_multipleSkippedPhases_allMarkedSkipped() {
+            ApmConfigHolder holder = new ApmConfigHolder();
+            holder.setApmPhaseList(List.of("alpha", "gamma"));
+
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
+                    .over(PHASES)
+                    .skipPhases(holder::getApmPhaseList)
+                    .map(phase -> "deployed")
+                    .execute();
+
+            assertThat(results.get(0).isSkipped()).isTrue();
+            assertThat(results.get(1).isSucceeded()).isTrue();
+            assertThat(results.get(2).isSkipped()).isTrue();
+        }
+
+        @Test
+        void supplier_allPhasesSkipped_nothingDeployed() {
+            ApmConfigHolder holder = new ApmConfigHolder();
+            holder.setApmPhaseList(PHASES);
+
+            List<String> deployed = new ArrayList<>();
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
+                    .over(PHASES)
+                    .skipPhases(holder::getApmPhaseList)
+                    .map(phase -> { deployed.add(phase); return "deployed"; })
+                    .execute();
+
+            assertThat(deployed).isEmpty();
+            assertThat(results).allMatch(PhaseTaskOutput::isSkipped);
+        }
+
+        @Test
+        void supplier_combinesWithStopEarly() {
+            ApmConfigHolder holder = new ApmConfigHolder();
+            holder.setApmPhaseList(List.of("alpha"));
+
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
+                    .over(PHASES)
+                    .skipPhases(holder::getApmPhaseList)
+                    .map(phase -> phase.equals("beta") ? "fail" : "deployed")
+                    .isSuccessCriteria(v -> v.equals("deployed"))
+                    .stopEarly()
+                    .execute();
+
+            assertThat(results.get(0).isSkipped()).isTrue();             // alpha — holder skip
+            assertThat(results.get(1).status()).isEqualTo(PhaseTaskStatus.FAILED_BY_CRITERIA); // beta
+            assertThat(results.get(2).isSkipped()).isTrue();             // gamma — stopEarly
+        }
+
+        @Test
+        void supplier_worksWithExecuteParallel() {
+            ApmConfigHolder holder = new ApmConfigHolder();
+            holder.setApmPhaseList(List.of("beta"));
+
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
+                    .over(PHASES)
+                    .skipPhases(holder::getApmPhaseList)
+                    .map(phase -> "deployed")
+                    .executeParallel();
+
+            assertThat(results.get(0).isSucceeded()).isTrue();
+            assertThat(results.get(1).isSkipped()).isTrue();
+            assertThat(results.get(2).isSucceeded()).isTrue();
+        }
+
+        @Test
+        void supplier_skippedOutput_hasEmptyValue_andZeroDuration() {
+            ApmConfigHolder holder = new ApmConfigHolder();
+            holder.setApmPhaseList(List.of("alpha"));
+
+            PhaseTaskOutput<String, String> skipped = PhaseTaskIterator
+                    .over(PHASES)
+                    .skipPhases(holder::getApmPhaseList)
+                    .map(phase -> "deployed")
+                    .execute()
+                    .get(0);
+
+            assertThat(skipped.phase()).isEqualTo("alpha");
+            assertThat(skipped.value()).isEmpty();
+            assertThat(skipped.duration().isZero()).isTrue();
         }
     }
 
