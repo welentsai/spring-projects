@@ -65,13 +65,13 @@ Adapter/In → Port/In (UseCase Interface)
 
 1. 使用 **Constructor Injection**，不直接使用 `@Value` 等 Spring annotation
 2. 只注入 **Port/In interface**（UseCase）
-3. Request → Input 轉換流程須依序為：
+3. Request → Response 完整轉換流程為一條 Optional 串鏈，依序為：
     1. `request.validate()` 在 Adapter/In 層完成驗證，回傳 `Optional<{Domain}Request>`
     2. `.map(Mapper::toInput)` 將 Request 轉換為 `UseCaseInput`
-    3. `.map(useCase::execute)` 執行 UseCase
-    4. `.orElseThrow(BadRequestException::new)` 驗證失敗拋出例外，由 `GlobalExceptionHandler` 統一處理
-4. 在 Controller 方法中完成 `Result → Response` 的轉換
-5. 如需系統層級 Config，透過 Constructor Injection 注入 `framework.config` 中的 Config bean
+    3. `.map(useCase::execute)` 執行 UseCase，回傳 `XxxResult`
+    4. `.map(Mapper::toResponse)` 將 Result 轉換為 Response DTO（**仍在 Optional 鏈內**）
+    5. `.orElseThrow(BadRequestException::new)` 驗證失敗拋出例外，由 `GlobalExceptionHandler` 統一處理
+4. 如需系統層級 Config，透過 Constructor Injection 注入 `framework.config` 中的 Config bean
 
 ### 5.2 正確範例
 ```java
@@ -95,15 +95,15 @@ public class OrderController {
             @RequestBody CreateOrderRequest request) {
 
         // ✅ validate() 在 Request DTO 執行（Adapter/In 層）
-        // ✅ 驗證通過後才進行 Mapping 與 UseCase 執行
+        // ✅ Result → Response 的轉換也在 Optional 鏈內（第 4 個 map）
         // ✅ 驗證失敗由 orElseThrow 拋出，GlobalExceptionHandler 統一處理
-        OrderResult result = request.validate()
+        OrderResponse response = request.validate()
                 .map(OrderRequestMapper::toInput)        // Request → UseCaseInput
-                .map(createOrderUseCase::execute)        // 執行 UseCase
+                .map(createOrderUseCase::execute)        // 執行 UseCase → XxxResult
+                .map(OrderRequestMapper::toResponse)     // Result → Response DTO（在鏈內）
                 .orElseThrow(BadRequestException::new);  // 驗證失敗拋出 BadRequestException
 
-        // ✅ Result → Response 轉換
-        return ResponseEntity.ok(OrderRequestMapper.toResponse(result));
+        return ResponseEntity.ok(response);
     }
 }
 ```

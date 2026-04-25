@@ -59,7 +59,8 @@ com.example.demo/
 │   ├── config/                   # AppConfig, VideoConfig
 │   └── dynamicdatasource/        # AbstractRoutingDataSource for dual-DB routing
 ├── exception/                    # BadRequestException, UserNotFoundException
-├── util/                         # Shared utilities
+├── util/
+│   └── multiphaseterator/        # PhaseTaskIterator — fluent async task runner over phase lists
 └── system/                       # Cross-cutting: AOP logging, HTTP filter, MDC context
 ```
 
@@ -96,12 +97,14 @@ The domain and use case layers have **no Spring annotations** (`@Service`, `@Com
 **Request Validation Chain:** Controllers use a fluent monad-style pipeline instead of exception-first validation:
 ```java
 new XxxRequest(...)
-    .validate()          // returns Optional<XxxRequest>
+    .validate()                    // returns Optional<XxxRequest>
     .map(mapper::toInput)
     .map(useCase::execute)
-    .map(mapper::toResponse)
+    .map(mapper::toResponse)       // Response mapping inside the chain
     .orElseThrow(BadRequestException::new);
 ```
+
+**PhaseTaskIterator (`util.multiphaseterator`):** Fluent builder for running an async task over a list of named phases and collecting typed `PhaseTaskOutput<K,V>` results. Supports sequential (`execute()`) and parallel fan-out (`executeParallel()`), phase skipping (`skipPhases()`), early-stop on failure (`stopEarly()`), sequential composition (`thenMap`, `thenMapAsync`), and parallel composition (`andMap`, `andMapAsync`). Used for multi-environment deployment pipelines or any N-phase async workflow. `Try<T>` (sealed interface) and `ApmConfigHolder` are companion utilities in the same package.
 
 ## Naming Conventions (enforced by ArchUnit tests)
 
