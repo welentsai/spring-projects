@@ -96,7 +96,129 @@ Based on what the user is asking, pick the appropriate output mode:
 | Show module rules for a specific package | → [Module Rules](#module-rules) |
 | Generate package-level CLAUDE.md files | → [Generate Package CLAUDE.md](#generate-package-claudemd) |
 | Refresh stale package CLAUDE.md files | → [Refresh Mode](#refresh-mode) |
+| Plan which folders should have CLAUDE.md | → [CLAUDE.md Placement Strategy](#claudemd-placement-strategy) |
 | Full context dump for new AI session | → Run all outputs |
+
+---
+
+## CLAUDE.md Placement Strategy
+
+當使用者詢問「哪些 folder 要加 CLAUDE.md」、「如何規劃 context 架構」時執行此流程。
+
+### Claude Code 的讀取機制
+
+Claude Code 在某個目錄工作時，**沿著路徑由根到當前目錄疊加讀取**所有 CLAUDE.md，不是只讀最近的那一個：
+
+```
+# 在 adapter/in/web/ 工作時，以下全部都會被讀取：
+根目錄/CLAUDE.md          ✅ 讀
+adapter/CLAUDE.md          ✅ 讀
+adapter/in/CLAUDE.md       ✅ 讀
+adapter/in/web/CLAUDE.md   ✅ 讀
+```
+
+### 判斷是否需要放置 CLAUDE.md 的三個問題
+
+對每個目錄問以下三個問題，若全部都是「否」則不用放：
+
+1. 這個 folder 有**獨特的規範**，上層 CLAUDE.md 沒說過的嗎？
+2. 工程師或 AI 在這裡容易**犯特定的錯誤**嗎？
+3. 這裡的 pattern 在看程式碼時**不容易自己推斷**嗎？
+
+### 放置策略（Clean Architecture 專案）
+
+```
+your-project/
+├── CLAUDE.md                          ✅ 必放：專案總綱、架構概覽、Dependency Rule
+│
+└── src/main/java/com/example/demo/
+    ├── domain/model/
+    │   └── CLAUDE.md                  ✅ 必放：最重要，零 framework import 規則、record vs class 規範
+    │
+    ├── usecase/ports/in/
+    │   └── CLAUDE.md                  ✅ 必放：UseCase interface contract、Result 設計規範
+    │
+    ├── usecase/ports/in/impl/
+    │   └── CLAUDE.md                  ✅ 必放：無 Spring annotation、Exception 不外傳、Entity 不出界
+    │
+    ├── usecase/ports/out/gateway/
+    │   └── CLAUDE.md                  ✅ 必放：三件套（interface + Input + Output record）規範
+    │
+    ├── usecase/ports/out/repository/
+    │   └── CLAUDE.md                  ⚠️ 選放：有 CQRS 分工（JdbcClient read / JpaRepository write）才放
+    │
+    ├── adapter/in/
+    │   └── CLAUDE.md                  ✅ 必放：validate().map().map().map().orElseThrow() 完整管道
+    │
+    ├── adapter/out/gateway/
+    │   └── CLAUDE.md                  ✅ 必放：無 Spring annotation、LoggingAspect 自動覆蓋、單一 interface
+    │
+    ├── adapter/out/repository/
+    │   └── CLAUDE.md                  ✅ 必放：@Repository 唯一允許、JdbcClient named parameter 規範
+    │
+    ├── framework/di/
+    │   └── CLAUDE.md                  ✅ 必放：Composition Root 規範、@Bean 回傳 interface 規則
+    │
+    ├── util/{complex-utility}/
+    │   └── CLAUDE.md                  ⚠️ 選放：API 複雜（如 PhaseTaskIterator）才放使用範例
+    │
+    ├── exception/                     ❌ 不放：規則簡單，根目錄已說明
+    └── system/                        ❌ 不放：AOP 規則已在 adapter/out/gateway CLAUDE.md 說明
+```
+
+### 每層 CLAUDE.md 的適當長度
+
+| 層級 | 建議行數 | 內容重點 |
+|------|---------|---------|
+| 根目錄 | 100–200 行 | 架構總覽、Dependency Rule、命名規範、測試策略 |
+| domain | 80–150 行 | 業務規則、record vs class、零 framework import |
+| usecase | 80–120 行 | UseCase contract、Result 設計、CQRS 分工 |
+| adapter | 60–100 行 | 實作規範、Spring annotation 限制、禁止事項 |
+| framework/di | 40–80 行 | Composition Root、@Bean 配線原則 |
+| util（複雜工具） | 30–60 行 | 使用範例、API 說明，不重複 Javadoc |
+
+### 反模式（避免）
+
+```
+❌ 每個 folder 都放，內容都差不多
+   → 浪費 context window，AI 讀到重複資訊
+
+❌ 上下層說同一件事
+   根目錄說「禁止跨層依賴」
+   adapter/CLAUDE.md 又說一次
+   adapter/in/CLAUDE.md 又說一次
+   → 三次重複，沒有增加資訊
+
+✅ 上層說原則，下層說具體規則，最深層說實作細節
+   根目錄/CLAUDE.md    → 「禁止跨層依賴」（原則）
+   adapter/in/CLAUDE.md → 「Controller 只能注入 Port/In interface」（具體規則）
+```
+
+### 自我驗證問題
+
+放完之後問自己：
+
+> 如果一個新工程師**只讀這個 folder 的 CLAUDE.md**，
+> 他會得到在其他地方**讀不到**的資訊嗎？
+>
+> **YES → 值得放　　NO → 刪掉，讓上層覆蓋就好**
+
+### 此專案的現況對照
+
+| 路徑 | 狀態 | 說明 |
+|------|------|------|
+| `CLAUDE.md` | ✅ 已放 | 根目錄總綱 |
+| `adapter/in/CLAUDE.md` | ✅ 已放 | validate 管道規範 |
+| `adapter/out/gateway/CLAUDE.md` | ✅ 已放 | Gateway 實作規範 |
+| `adapter/out/repository/CLAUDE.md` | ✅ 已放 | JdbcClient 規範 |
+| `usecase/ports/in/CLAUDE.md` | ✅ 已放 | UseCase contract |
+| `usecase/ports/in/impl/CLAUDE.md` | ✅ 已放 | UseCase 實作規範 |
+| `usecase/ports/out/gateway/CLAUDE.md` | ✅ 已放 | Gateway port 規範 |
+| `domain/model/CLAUDE.md` | ✅ 已放 | Domain model 規範 |
+| `framework/di/CLAUDE.md` | ✅ 已放 | DI 配線規範 |
+| `usecase/ports/out/repository/` | ⚠️ 可補 | CQRS 分工規則 |
+| `util/multiphaseterator/` | ⚠️ 可補 | PhaseTaskIterator 使用範例 |
+| `exception/`, `system/` | ❌ 不需放 | 規則已在上層說明 |
 
 ---
 
