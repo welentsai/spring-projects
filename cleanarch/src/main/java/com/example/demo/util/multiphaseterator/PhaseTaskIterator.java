@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -31,6 +32,25 @@ import java.util.function.Supplier;
  *     .isSuccessCriteria(r -> r.exitCode() == 0)
  *     .stopEarly()
  *     .execute();
+ * }</pre>
+ *
+ * <p>Tasks can be pipelined sequentially or fanned out in parallel:
+ *
+ * <pre>{@code
+ * // Sequential pipeline: each step receives the previous output
+ * PhaseTaskIterator.over(phases)
+ *     .map(phase -> deploy(phase))
+ *     .thenMap(r -> runTests(r))
+ *     .thenMapAsync(r -> notifyAsync(r))
+ *     .isSuccessCriteria(r -> r.sent())
+ *     .execute();
+ *
+ * // Parallel fan-out: two independent tasks per phase, results combined
+ * PhaseTaskIterator.over(phases)
+ *     .map(phase -> deployA(phase))
+ *     .andMap(phase -> deployB(phase), (a, b) -> new Combined(a, b))
+ *     .isSuccessCriteria(c -> c.bothOk())
+ *     .executeParallel();
  * }</pre>
  *
  * @param <K> phase key type
@@ -82,7 +102,8 @@ public final class PhaseTaskIterator<K, V> {
      */
     public PhaseTaskIterator<K, V> skipPhases(Supplier<? extends Collection<? extends K>> skipPhasesSupplier) {
         Objects.requireNonNull(skipPhasesSupplier, "skipPhasesSupplier must not be null");
-        return new PhaseTaskIterator<>(phases, () -> Set.copyOf(skipPhasesSupplier.get()), taskMapper, successCriteria, earlyStop);
+        return new PhaseTaskIterator<>(
+                phases, () -> Set.copyOf(skipPhasesSupplier.get()), taskMapper, successCriteria, earlyStop);
     }
 
     /**
@@ -96,7 +117,7 @@ public final class PhaseTaskIterator<K, V> {
         return new PhaseTaskIterator<>(phases, skipPhases, taskMapper, successCriteria, true);
     }
 
-    // ── Map (binds output type V → R) ─────────────────────────────────────────
+    // ── Map (binds output type K → V) ─────────────────────────────────────────
 
     /**
      * Maps each phase key to a synchronous task using the common fork-join pool.
@@ -105,9 +126,12 @@ public final class PhaseTaskIterator<K, V> {
      */
     public <R> PhaseTaskIterator<K, R> map(Function<K, R> fn) {
         Objects.requireNonNull(fn, "fn must not be null");
-        return new PhaseTaskIterator<>(phases, skipPhases,
+        return new PhaseTaskIterator<>(
+                phases,
+                skipPhases,
                 phase -> CompletableFuture.supplyAsync(() -> fn.apply(phase)),
-                v -> true, earlyStop);
+                v -> true,
+                earlyStop);
     }
 
     /**
@@ -116,9 +140,13 @@ public final class PhaseTaskIterator<K, V> {
      */
     public <R> PhaseTaskIterator<K, R> map(Function<K, R> fn, Executor executor) {
         Objects.requireNonNull(fn, "fn must not be null");
-        return new PhaseTaskIterator<>(phases, skipPhases,
+        Objects.requireNonNull(executor, "executor must not be null");
+        return new PhaseTaskIterator<>(
+                phases,
+                skipPhases,
                 phase -> CompletableFuture.supplyAsync(() -> fn.apply(phase), executor),
-                v -> true, earlyStop);
+                v -> true,
+                earlyStop);
     }
 
     /**
@@ -128,6 +156,132 @@ public final class PhaseTaskIterator<K, V> {
     public <R> PhaseTaskIterator<K, R> mapAsync(Function<K, CompletableFuture<R>> fn) {
         Objects.requireNonNull(fn, "fn must not be null");
         return new PhaseTaskIterator<>(phases, skipPhases, fn, v -> true, earlyStop);
+    }
+
+    // ── Sequential composition (requires prior map / mapAsync) ───────────────
+
+    /**
+     * Adds a synchronous step after the current task: the prior output feeds into {@code fn},
+     * equivalent to {@link CompletableFuture#thenApply}. Runs on the completing thread.
+     *
+     * <pre>{@code
+     * PhaseTaskIterator.over(phases)
+     *     .map(phase -> deploy(phase))     // K → DeployResult
+     *     .thenMap(r -> runTests(r))       // DeployResult → TestResult
+     *     .execute();
+     * }</pre>
+     *
+     * @throws IllegalStateException if called before {@link #map} or {@link #mapAsync}
+     */
+    public <R> PhaseTaskIterator<K, R> thenMap(Function<V, R> fn) {
+        Objects.requireNonNull(fn, "fn must not be null");
+        Function<K, CompletableFuture<V>> current = requireMapper();
+        return new PhaseTaskIterator<>(
+                phases, skipPhases, phase -> current.apply(phase).thenApply(fn), v -> true, earlyStop);
+    }
+
+    /**
+     * Same as {@link #thenMap(Function)} but runs the continuation on {@code executor},
+     * equivalent to {@link CompletableFuture#thenApplyAsync(Function, Executor)}.
+     *
+     * @throws IllegalStateException if called before {@link #map} or {@link #mapAsync}
+     */
+    public <R> PhaseTaskIterator<K, R> thenMap(Function<V, R> fn, Executor executor) {
+        Objects.requireNonNull(fn, "fn must not be null");
+        Objects.requireNonNull(executor, "executor must not be null");
+        Function<K, CompletableFuture<V>> current = requireMapper();
+        return new PhaseTaskIterator<>(
+                phases,
+                skipPhases,
+                phase -> current.apply(phase).thenApplyAsync(fn, executor),
+                v -> true,
+                earlyStop);
+    }
+
+    /**
+     * Adds an async step after the current task via {@link CompletableFuture#thenCompose}.
+     * Use when the continuation itself returns a {@code CompletableFuture} (e.g. a downstream
+     * HTTP call or DB query).
+     *
+     * @throws IllegalStateException if called before {@link #map} or {@link #mapAsync}
+     */
+    public <R> PhaseTaskIterator<K, R> thenMapAsync(Function<V, CompletableFuture<R>> fn) {
+        Objects.requireNonNull(fn, "fn must not be null");
+        Function<K, CompletableFuture<V>> current = requireMapper();
+        return new PhaseTaskIterator<>(
+                phases, skipPhases, phase -> current.apply(phase).thenCompose(fn), v -> true, earlyStop);
+    }
+
+    // ── Parallel composition (requires prior map / mapAsync) ─────────────────
+
+    /**
+     * Runs an independent task from the same phase key <em>in parallel</em> with the current
+     * task, then combines both results via {@code combiner} —
+     * equivalent to {@link CompletableFuture#thenCombine}. Uses the common fork-join pool.
+     *
+     * <pre>{@code
+     * PhaseTaskIterator.over(phases)
+     *     .map(phase -> deployA(phase))
+     *     .andMap(phase -> deployB(phase), (a, b) -> new Combined(a, b))
+     *     .isSuccessCriteria(c -> c.bothOk())
+     *     .executeParallel();
+     * }</pre>
+     *
+     * @throws IllegalStateException if called before {@link #map} or {@link #mapAsync}
+     */
+    public <W, R> PhaseTaskIterator<K, R> andMap(Function<K, W> parallelFn, BiFunction<V, W, R> combiner) {
+        Objects.requireNonNull(parallelFn, "parallelFn must not be null");
+        Objects.requireNonNull(combiner, "combiner must not be null");
+        Function<K, CompletableFuture<V>> current = requireMapper();
+        return new PhaseTaskIterator<>(
+                phases,
+                skipPhases,
+                phase -> current.apply(phase)
+                        .thenCombine(CompletableFuture.supplyAsync(() -> parallelFn.apply(phase)), combiner),
+                v -> true,
+                earlyStop);
+    }
+
+    /**
+     * Same as {@link #andMap(Function, BiFunction)} but runs the parallel branch on {@code executor}.
+     *
+     * @throws IllegalStateException if called before {@link #map} or {@link #mapAsync}
+     */
+    public <W, R> PhaseTaskIterator<K, R> andMap(
+            Function<K, W> parallelFn, Executor executor, BiFunction<V, W, R> combiner) {
+        Objects.requireNonNull(parallelFn, "parallelFn must not be null");
+        Objects.requireNonNull(executor, "executor must not be null");
+        Objects.requireNonNull(combiner, "combiner must not be null");
+        Function<K, CompletableFuture<V>> current = requireMapper();
+        return new PhaseTaskIterator<>(
+                phases,
+                skipPhases,
+                phase -> current.apply(phase)
+                        .thenCombine(
+                                CompletableFuture.supplyAsync(() -> parallelFn.apply(phase), executor),
+                                combiner),
+                v -> true,
+                earlyStop);
+    }
+
+    /**
+     * Same as {@link #andMap(Function, BiFunction)} but the parallel branch is a
+     * {@code CompletableFuture} — use when the parallel step manages its own async lifecycle
+     * (virtual threads, reactor, custom executor, etc.).
+     *
+     * @throws IllegalStateException if called before {@link #map} or {@link #mapAsync}
+     */
+    public <W, R> PhaseTaskIterator<K, R> andMapAsync(
+            Function<K, CompletableFuture<W>> parallelFn, BiFunction<V, W, R> combiner) {
+        Objects.requireNonNull(parallelFn, "parallelFn must not be null");
+        Objects.requireNonNull(combiner, "combiner must not be null");
+        Function<K, CompletableFuture<V>> current = requireMapper();
+        return new PhaseTaskIterator<>(
+                phases,
+                skipPhases,
+                phase -> current.apply(phase).thenCombine(parallelFn.apply(phase), combiner),
+                v -> true,
+                earlyStop);
     }
 
     // ── Post-map configuration ────────────────────────────────────────────────
