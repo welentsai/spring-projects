@@ -29,6 +29,24 @@ public class ArchunitRuleTest {
     }
 
     @Test
+    public void multiphaseterator_only_used_by_framework_and_usecase() {
+        JavaClasses importedClasses = new ClassFileImporter().importPackages("com.example");
+
+        ArchRule rule = noClasses()
+                .that()
+                .resideOutsideOfPackages(
+                        "..framework..",
+                        "..usecase..",
+                        "..multiphaseterator..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAPackage("..multiphaseterator..")
+                .because("multiphaseterator utilities may only be used by the framework or usecase layers");
+
+        rule.check(importedClasses);
+    }
+
+    @Test
     public void methods_should_be_camel_case() {
         JavaClasses importedClasses = new ClassFileImporter().importPackages("com.example");
 
