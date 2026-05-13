@@ -1,12 +1,17 @@
 package com.example.demo.archunit;
 
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
+import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.domain.JavaModifier;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
+import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
+import com.tngtech.archunit.lang.ConditionEvents;
+import com.tngtech.archunit.lang.SimpleConditionEvent;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -69,6 +74,37 @@ public class ArchunitRuleTest {
                 .should()
                 .haveNameMatching("^[a-z][a-zA-Z0-9]*$")
                 .because("Production methods should follow camelCase naming convention");
+
+        rule.check(importedClasses);
+    }
+
+    @Test
+    public void multiphaseterator_should_not_be_used_with_gateways_in_usecase() {
+        JavaClasses importedClasses = new ClassFileImporter().importPackages("com.example");
+
+        ArchRule rule = classes()
+                .that()
+                .resideInAPackage("..usecase..")
+                .should(new ArchCondition<JavaClass>("not use PhaseTaskIterator to call Gateways") {
+                    @Override
+                    public void check(JavaClass javaClass, ConditionEvents events) {
+                        javaClass.getCodeUnits().forEach(method -> {
+                            boolean callsIterator = method.getMethodCallsFromSelf().stream()
+                                    .anyMatch(call -> call.getTarget().getOwner().getName().contains("PhaseTaskIterator"));
+                            
+                            boolean callsGateway = method.getMethodCallsFromSelf().stream()
+                                    .anyMatch(call -> call.getTarget().getOwner().getPackageName().contains("gateway")
+                                                   && call.getTarget().getName().equals("execute"));
+
+                            if (callsIterator && callsGateway) {
+                                events.add(SimpleConditionEvent.violated(javaClass,
+                                        String.format("Method %s.%s uses PhaseTaskIterator and calls a Gateway. " +
+                                                "Gateways should not be used within PhaseTaskIterator transformations in the usecase layer.",
+                                                javaClass.getName(), method.getName())));
+                            }
+                        });
+                    }
+                });
 
         rule.check(importedClasses);
     }
