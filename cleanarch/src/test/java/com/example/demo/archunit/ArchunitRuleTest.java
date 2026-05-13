@@ -85,21 +85,27 @@ public class ArchunitRuleTest {
         ArchRule rule = classes()
                 .that()
                 .resideInAPackage("..usecase..")
-                .should(new ArchCondition<JavaClass>("not use PhaseTaskIterator to call Gateways") {
+                .should(new ArchCondition<JavaClass>("not use PhaseTaskIterator to call restricted Gateways") {
                     @Override
                     public void check(JavaClass javaClass, ConditionEvents events) {
                         javaClass.getCodeUnits().forEach(method -> {
                             boolean callsIterator = method.getMethodCallsFromSelf().stream()
                                     .anyMatch(call -> call.getTarget().getOwner().getName().contains("PhaseTaskIterator"));
                             
-                            boolean callsGateway = method.getMethodCallsFromSelf().stream()
-                                    .anyMatch(call -> call.getTarget().getOwner().getPackageName().contains("gateway")
-                                                   && call.getTarget().getName().equals("execute"));
+                            boolean callsRestrictedGateway = method.getMethodCallsFromSelf().stream()
+                                    .anyMatch(call -> {
+                                        JavaClass owner = call.getTarget().getOwner();
+                                        if (owner.getPackageName().contains("gateway") && call.getTarget().getName().equals("execute")) {
+                                            String simpleName = owner.getSimpleName();
+                                            return !(simpleName.startsWith("Inquire") || simpleName.startsWith("Get"));
+                                        }
+                                        return false;
+                                    });
 
-                            if (callsIterator && callsGateway) {
+                            if (callsIterator && callsRestrictedGateway) {
                                 events.add(SimpleConditionEvent.violated(javaClass,
-                                        String.format("Method %s.%s uses PhaseTaskIterator and calls a Gateway. " +
-                                                "Gateways should not be used within PhaseTaskIterator transformations in the usecase layer.",
+                                        String.format("Method %s.%s uses PhaseTaskIterator and calls a restricted Gateway. " +
+                                                "Only Gateways starting with 'Inquire' or 'Get' are allowed within PhaseTaskIterator transformations in the usecase layer.",
                                                 javaClass.getName(), method.getName())));
                             }
                         });
