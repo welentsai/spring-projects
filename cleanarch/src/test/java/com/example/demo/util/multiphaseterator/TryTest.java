@@ -33,10 +33,12 @@ class TryTest {
 
     @Test
     void of_catchesException_returnsFailure() {
-        Try<Integer> t = Try.of(() -> { throw new IllegalArgumentException("bad"); });
+        Try<Integer> t = Try.of(() -> {
+            throw new IllegalArgumentException("bad");
+        });
         assertThat(t.isFailure()).isTrue();
-        assertThat(t).isInstanceOfSatisfying(Try.Failure.class,
-                f -> assertThat(f.cause()).isInstanceOf(IllegalArgumentException.class));
+        assertThat(t).isInstanceOfSatisfying(Try.Failure.class, f -> assertThat(f.cause())
+                .isInstanceOf(IllegalArgumentException.class));
     }
 
     // ── getOrElse ─────────────────────────────────────────────────────────────
@@ -48,7 +50,8 @@ class TryTest {
 
     @Test
     void getOrElse_returnsFallback_onFailure() {
-        assertThat(Try.<String>failure(new RuntimeException()).getOrElse("fallback")).isEqualTo("fallback");
+        assertThat(Try.<String>failure(new RuntimeException()).getOrElse("fallback"))
+                .isEqualTo("fallback");
     }
 
     // ── getOrThrow ────────────────────────────────────────────────────────────
@@ -76,15 +79,19 @@ class TryTest {
     @Test
     void map_propagatesFailure_withoutCallingMapper() {
         RuntimeException cause = new RuntimeException("original");
-        Try<String> result = Try.<String>failure(cause).map(s -> { throw new AssertionError("should not run"); });
+        Try<String> result = Try.<String>failure(cause).map(s -> {
+            throw new AssertionError("should not run");
+        });
         assertThat(result.isFailure()).isTrue();
-        assertThat(result).isInstanceOfSatisfying(Try.Failure.class,
-                f -> assertThat(f.cause()).isSameAs(cause));
+        assertThat(result).isInstanceOfSatisfying(Try.Failure.class, f -> assertThat(f.cause())
+                .isSameAs(cause));
     }
 
     @Test
     void map_returnsFailure_whenMapperThrows() {
-        Try<String> result = Try.success("ok").map(s -> { throw new RuntimeException("mapper error"); });
+        Try<String> result = Try.success("ok").map(s -> {
+            throw new RuntimeException("mapper error");
+        });
         assertThat(result.isFailure()).isTrue();
     }
 
@@ -99,11 +106,11 @@ class TryTest {
     @Test
     void flatMap_propagatesFirstFailure() {
         RuntimeException cause = new RuntimeException("first");
-        Try<Integer> result = Try.<String>failure(cause)
-                .flatMap(s -> Try.success(Integer.parseInt(s)));
+        Try<Integer> result =
+                Try.<String>failure(cause).flatMap(s -> Try.success(Integer.parseInt(s)));
         assertThat(result.isFailure()).isTrue();
-        assertThat(result).isInstanceOfSatisfying(Try.Failure.class,
-                f -> assertThat(f.cause()).isSameAs(cause));
+        assertThat(result).isInstanceOfSatisfying(Try.Failure.class, f -> assertThat(f.cause())
+                .isSameAs(cause));
     }
 
     // ── onSuccess / onFailure ─────────────────────────────────────────────────

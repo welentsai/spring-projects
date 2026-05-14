@@ -9,6 +9,7 @@ import com.example.demo.usecase.ports.in.dto.CityDto;
 import com.example.demo.usecase.ports.out.entity.CityJpaEntity;
 import com.example.demo.usecase.ports.out.gateway.*;
 import com.example.demo.usecase.ports.out.repository.CitiesQueryRepository;
+import com.example.demo.util.multiphaseterator.PhaseTaskIterator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +42,10 @@ public class FindCitiesUseCaseImpl implements FindCitiesUseCase {
             logger.info("Inline routing output is {}", output);
             putLogGateway.execute(new PutLogInput("Inline routing output is", output));
 
+//            PhaseTaskIterator.over(List.of("a"))
+//                    .map(p -> getInlineRoutingOutputIs(output))
+//                    .execute();
+
             // 在執行資料庫操作前，設定當前執行緒的資料來源
             if (output.datasourceKey().equalsIgnoreCase("PRIMARY")) {
                 DataSourceContextHolder.setDataSourceKey(DataSourceKey.PRIMARY);
@@ -55,6 +60,15 @@ public class FindCitiesUseCaseImpl implements FindCitiesUseCase {
             DataSourceKey dataSourceKey = "PRIMARY".equals(output.datasourceKey())
                     ? DataSourceKey.PRIMARY
                     : DataSourceKey.SECONDARY;
+
+//            PhaseTaskIterator.over(List.of("a"))
+//                    .map(p -> putLogGateway.execute(
+//                            new PutLogInput("Inline routing output is", output)))
+//                    .execute();
+
+            PhaseTaskIterator.over(List.of("a"))
+                    .map(p -> p + "a")
+                    .execute();
 
             DataSourceContextHolder.setDataSourceKey(dataSourceKey);
             logger.info("Set data source context to: {}", dataSourceKey);
@@ -82,5 +96,9 @@ public class FindCitiesUseCaseImpl implements FindCitiesUseCase {
             return FindCitiesResult.failure(
                     "INTERNAL_ERROR", "Failed to retrieve cities: " + e.getMessage());
         }
+    }
+
+    private PutLogOutput getInlineRoutingOutputIs(InlineRoutingOutput output) {
+        return putLogGateway.execute(new PutLogInput("Inline routing output is", output));
     }
 }

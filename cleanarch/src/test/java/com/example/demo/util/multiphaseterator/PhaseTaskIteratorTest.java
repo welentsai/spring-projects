@@ -21,10 +21,8 @@ class PhaseTaskIteratorTest {
 
         @Test
         void returnsOneOutputPerPhase_inOrder() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
-                    .map(phase -> phase + "-done")
-                    .execute();
+            List<PhaseTaskOutput<String, String>> results =
+                    PhaseTaskIterator.over(PHASES).map(phase -> phase + "-done").execute();
 
             assertThat(results).hasSize(3);
             assertThat(results.get(0).phase()).isEqualTo("alpha");
@@ -34,8 +32,8 @@ class PhaseTaskIteratorTest {
 
         @Test
         void returnsEmptyList_whenNoPhasesGiven() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(List.<String>of())
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(
+                            List.<String>of())
                     .map(phase -> "unreachable")
                     .execute();
 
@@ -44,8 +42,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void allSucceeded_whenCriteriaPasses() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .map(phase -> "ok")
                     .isSuccessCriteria(v -> v.equals("ok"))
                     .execute();
@@ -55,8 +52,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void failedByCriteria_whenCriteriaFails() {
-            List<PhaseTaskOutput<String, Integer>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, Integer>> results = PhaseTaskIterator.over(PHASES)
                     .map(phase -> 0)
                     .isSuccessCriteria(v -> v > 0)
                     .execute();
@@ -66,8 +62,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void failedByException_whenTaskThrows() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .<String>map(phase -> {
                         throw new RuntimeException("task error");
                     })
@@ -78,8 +73,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void valueAccessible_onSuccess() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(List.of("only"))
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(List.of("only"))
                     .map(phase -> "payload")
                     .execute();
 
@@ -88,8 +82,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void valueEmpty_onFailure() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(List.of("only"))
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(List.of("only"))
                     .<String>map(phase -> {
                         throw new RuntimeException();
                     })
@@ -100,20 +93,16 @@ class PhaseTaskIteratorTest {
 
         @Test
         void noCriteria_defaultsToAlwaysSucceeded() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
-                    .map(phase -> "anything")
-                    .execute();
+            List<PhaseTaskOutput<String, String>> results =
+                    PhaseTaskIterator.over(PHASES).map(phase -> "anything").execute();
 
             assertThat(results).allMatch(PhaseTaskOutput::isSucceeded);
         }
 
         @Test
         void recordsNonNegativeDuration_forCompletedPhase() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(List.of("only"))
-                    .map(phase -> "done")
-                    .execute();
+            List<PhaseTaskOutput<String, String>> results =
+                    PhaseTaskIterator.over(List.of("only")).map(phase -> "done").execute();
 
             assertThat(results.get(0).duration().toNanos()).isGreaterThanOrEqualTo(0);
         }
@@ -124,8 +113,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void skipsRemainingAfterCriteriaFailure() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .map(phase -> phase.equals("alpha") ? "fail" : "ok")
                     .isSuccessCriteria(v -> v.equals("ok"))
                     .stopEarly()
@@ -138,8 +126,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void skipsRemainingAfterException() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .map(phase -> {
                         if (phase.equals("alpha")) throw new RuntimeException("boom");
                         return "ok";
@@ -154,8 +141,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void doesNotSkip_whenAllSucceed() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .map(phase -> "ok")
                     .isSuccessCriteria(v -> v.equals("ok"))
                     .stopEarly()
@@ -167,8 +153,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void collectsResultUpToAndIncludingFailure() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .map(phase -> phase.equals("beta") ? "bad" : "ok")
                     .isSuccessCriteria(v -> v.equals("ok"))
                     .stopEarly()
@@ -181,8 +166,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void skippedOutput_hasEmptyResult_andZeroDuration() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .<String>map(phase -> {
                         throw new RuntimeException();
                     })
@@ -201,8 +185,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void returnsAllResultsInPhaseOrder() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .map(phase -> phase + "-parallel")
                     .executeParallel();
 
@@ -214,8 +197,8 @@ class PhaseTaskIteratorTest {
 
         @Test
         void returnsEmptyList_whenNoPhasesGiven() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(List.<String>of())
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(
+                            List.<String>of())
                     .map(phase -> "unreachable")
                     .executeParallel();
 
@@ -224,8 +207,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void allSucceeded_whenCriteriaPasses() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .map(phase -> "ok")
                     .isSuccessCriteria(v -> v.equals("ok"))
                     .executeParallel();
@@ -235,8 +217,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void collectsAll_withoutStopEarly() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .mapAsync(phase -> phase.equals("beta")
                             ? CompletableFuture.failedFuture(new RuntimeException("boom"))
                             : CompletableFuture.completedFuture("ok"))
@@ -249,8 +230,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void stopEarly_skipsAfterFirstFailure() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .mapAsync(phase -> phase.equals("alpha")
                             ? CompletableFuture.failedFuture(new RuntimeException("boom"))
                             : CompletableFuture.completedFuture("ok"))
@@ -266,8 +246,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void thenMap_pipelinesResults_inPhaseOrder() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .map(phase -> phase.length()) // String → Integer
                     .thenMap(n -> "len=" + n) // Integer → String
                     .executeParallel();
@@ -282,8 +261,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void thenMap_multipleSteps_preservesPhaseOrder() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .map(phase -> phase.toUpperCase())
                     .thenMap(s -> s + "!")
                     .thenMap(s -> "[" + s + "]")
@@ -297,8 +275,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void thenMap_exceptionMidPipeline_recordsFailedByException_forThatPhase() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .map(phase -> phase)
                     .thenMap(s -> {
                         if (s.equals("beta")) throw new RuntimeException("beta thenMap fail");
@@ -313,8 +290,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void thenMap_stopEarly_skipsAfterFirstPipelineFailure() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .mapAsync(phase -> phase.equals("alpha")
                             ? CompletableFuture.<String>failedFuture(new RuntimeException("boom"))
                             : CompletableFuture.completedFuture(phase))
@@ -329,8 +305,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void thenMap_collectsAll_withoutStopEarly() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .map(phase -> phase)
                     .thenMap(s -> {
                         if (s.equals("beta")) throw new RuntimeException("beta fail");
@@ -347,8 +322,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void thenMapAsync_composesAndPreservesPhaseOrder() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .map(phase -> phase + "-sync")
                     .thenMapAsync(s -> CompletableFuture.completedFuture(s + "-async"))
                     .executeParallel();
@@ -361,11 +335,11 @@ class PhaseTaskIteratorTest {
 
         @Test
         void thenMapAsync_failedContinuation_recordsFailedByException_forThatPhase() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .map(phase -> phase)
                     .thenMapAsync(s -> s.equals("beta")
-                            ? CompletableFuture.<String>failedFuture(new RuntimeException("async fail"))
+                            ? CompletableFuture.<String>failedFuture(
+                                    new RuntimeException("async fail"))
                             : CompletableFuture.completedFuture(s + "-ok"))
                     .executeParallel();
 
@@ -378,8 +352,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void andMap_fanOut_combinesResultsInPhaseOrder() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .map(phase -> phase + "-A")
                     .andMap(phase -> phase + "-B", (a, b) -> a + "|" + b)
                     .executeParallel();
@@ -397,8 +370,7 @@ class PhaseTaskIteratorTest {
                 return phase + "-B";
             };
 
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .map(phase -> phase + "-A")
                     .andMap(failForBeta, (a, b) -> a + "|" + b)
                     .executeParallel();
@@ -415,8 +387,7 @@ class PhaseTaskIteratorTest {
                 return phase + "-B";
             };
 
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .map(phase -> phase + "-A")
                     .andMap(failForAlpha, (a, b) -> a + "|" + b)
                     .stopEarly()
@@ -429,8 +400,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void andMap_isSuccessCriteria_appliesTo_combinedResult() {
-            List<PhaseTaskOutput<String, Integer>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, Integer>> results = PhaseTaskIterator.over(PHASES)
                     .map(phase -> phase.length())
                     .andMap(phase -> 10, Integer::sum)
                     .isSuccessCriteria(n -> n > 10)
@@ -444,8 +414,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void andMapAsync_combinesAsyncBranches_inPhaseOrder() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .mapAsync(phase -> CompletableFuture.completedFuture(phase + "-async1"))
                     .andMapAsync(
                             phase -> CompletableFuture.completedFuture(phase + "-async2"),
@@ -460,8 +429,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void andMapAsync_failedParallelFuture_recordsFailedByException_forThatPhase() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .map(phase -> phase + "-primary")
                     .andMapAsync(
                             phase -> phase.equals("beta")
@@ -480,8 +448,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void andMap_thenThenMap_preservesPhaseOrder() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .map(phase -> phase + "-A")
                     .andMap(phase -> phase + "-B", (a, b) -> a + "|" + b) // "alpha-A|alpha-B"
                     .thenMap(String::toUpperCase) // "ALPHA-A|ALPHA-B"
@@ -496,8 +463,7 @@ class PhaseTaskIteratorTest {
         @Test
         void fullChain_thenMap_andMap_stopEarly_executeParallel() {
             // alpha(5) → "long-a", beta(4) → "short-b" [fails criteria], gamma → skipped
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .map(phase -> phase.length())
                     .thenMap(n -> n > 4 ? "long" : "short")
                     .andMap(phase -> "-" + phase.charAt(0), (label, suffix) -> label + suffix)
@@ -506,7 +472,8 @@ class PhaseTaskIteratorTest {
                     .executeParallel();
 
             assertThat(results.get(0).isSucceeded()).isTrue(); // "long-a"
-            assertThat(results.get(1).status()).isEqualTo(PhaseTaskStatus.FAILED_BY_CRITERIA); // "short-b"
+            assertThat(results.get(1).status())
+                    .isEqualTo(PhaseTaskStatus.FAILED_BY_CRITERIA); // "short-b"
             assertThat(results.get(2).isSkipped()).isTrue();
         }
     }
@@ -516,8 +483,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void acceptsExplicitCompletableFuture() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(List.of("only"))
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(List.of("only"))
                     .mapAsync(phase -> CompletableFuture.completedFuture("async-result"))
                     .execute();
 
@@ -527,10 +493,9 @@ class PhaseTaskIteratorTest {
 
         @Test
         void capturesFailedFuture_asException() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(List.of("only"))
-                    .mapAsync(phase ->
-                            CompletableFuture.<String>failedFuture(new RuntimeException("async fail")))
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(List.of("only"))
+                    .mapAsync(phase -> CompletableFuture.<String>failedFuture(
+                            new RuntimeException("async fail")))
                     .execute();
 
             assertThat(results.get(0).status()).isEqualTo(PhaseTaskStatus.FAILED_BY_EXCEPTION);
@@ -543,8 +508,7 @@ class PhaseTaskIteratorTest {
         @Test
         void skippedPhases_areMarkedSkipped_andNotExecuted() {
             List<String> executed = new ArrayList<>();
-            PhaseTaskIterator
-                    .over(PHASES)
+            PhaseTaskIterator.over(PHASES)
                     .skipPhases(List.of("alpha"))
                     .map(phase -> {
                         executed.add(phase);
@@ -557,8 +521,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void skippedPhases_stillAppearInResults_withSkippedStatus() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .skipPhases(List.of("alpha"))
                     .map(phase -> "done")
                     .execute();
@@ -572,8 +535,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void skippedOutput_hasEmptyValue_andZeroDuration() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .skipPhases(List.of("beta"))
                     .map(phase -> "done")
                     .execute();
@@ -585,8 +547,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void skipAllPhases_returnsAllSkipped() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .skipPhases(PHASES)
                     .map(phase -> "unreachable")
                     .execute();
@@ -596,8 +557,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void emptySkipList_executesAllPhases() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .skipPhases(List.of())
                     .map(phase -> "done")
                     .execute();
@@ -608,8 +568,7 @@ class PhaseTaskIteratorTest {
         @Test
         void skipPhases_worksWithExecuteParallel() {
             List<String> executed = new ArrayList<>();
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .skipPhases(List.of("gamma"))
                     .map(phase -> {
                         executed.add(phase);
@@ -625,8 +584,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void skipPhases_combinesWithStopEarly() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .skipPhases(List.of("alpha"))
                     .map(phase -> phase.equals("beta") ? "fail" : "ok")
                     .isSuccessCriteria(v -> v.equals("ok"))
@@ -634,7 +592,8 @@ class PhaseTaskIteratorTest {
                     .execute();
 
             assertThat(results.get(0).isSkipped()).isTrue(); // alpha — explicitly skipped
-            assertThat(results.get(1).status()).isEqualTo(PhaseTaskStatus.FAILED_BY_CRITERIA); // beta
+            assertThat(results.get(1).status())
+                    .isEqualTo(PhaseTaskStatus.FAILED_BY_CRITERIA); // beta
             assertThat(results.get(2).isSkipped()).isTrue(); // gamma — stopped early
         }
     }
@@ -647,12 +606,10 @@ class PhaseTaskIteratorTest {
             ApmConfigHolder holder = new ApmConfigHolder();
             holder.setApmPhaseList(List.of("alpha"));
 
-            PhaseTaskIterator<String, ?> iterator = PhaseTaskIterator
-                    .over(PHASES)
-                    .skipPhases(holder::getApmPhaseList);
+            PhaseTaskIterator<String, ?> iterator =
+                    PhaseTaskIterator.over(PHASES).skipPhases(holder::getApmPhaseList);
 
-            List<PhaseTaskOutput<String, String>> first = iterator
-                    .map(phase -> "done")
+            List<PhaseTaskOutput<String, String>> first = iterator.map(phase -> "done")
                     .isSuccessCriteria(v -> v.equals("done"))
                     .execute();
 
@@ -662,7 +619,8 @@ class PhaseTaskIteratorTest {
 
             holder.setApmPhaseList(List.of("gamma"));
 
-            List<PhaseTaskOutput<String, String>> second = iterator.map(phase -> "done").execute();
+            List<PhaseTaskOutput<String, String>> second =
+                    iterator.map(phase -> "done").execute();
             assertThat(second.get(0).isSucceeded()).isTrue(); // alpha now runs
             assertThat(second.get(2).isSkipped()).isTrue(); // gamma now skipped
         }
@@ -671,8 +629,7 @@ class PhaseTaskIteratorTest {
         void supplier_emptyList_executesAllPhases() {
             ApmConfigHolder holder = new ApmConfigHolder();
 
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .skipPhases(holder::getApmPhaseList)
                     .map(phase -> "done")
                     .execute();
@@ -686,8 +643,7 @@ class PhaseTaskIteratorTest {
             holder.setApmPhaseList(List.of("beta"));
 
             List<String> deployed = new ArrayList<>();
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .skipPhases(holder::getApmPhaseList)
                     .map(phase -> {
                         deployed.add(phase);
@@ -705,8 +661,7 @@ class PhaseTaskIteratorTest {
             ApmConfigHolder holder = new ApmConfigHolder();
             holder.setApmPhaseList(List.of("alpha", "gamma"));
 
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .skipPhases(holder::getApmPhaseList)
                     .map(phase -> "deployed")
                     .execute();
@@ -722,8 +677,7 @@ class PhaseTaskIteratorTest {
             holder.setApmPhaseList(PHASES);
 
             List<String> deployed = new ArrayList<>();
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .skipPhases(holder::getApmPhaseList)
                     .map(phase -> {
                         deployed.add(phase);
@@ -740,8 +694,7 @@ class PhaseTaskIteratorTest {
             ApmConfigHolder holder = new ApmConfigHolder();
             holder.setApmPhaseList(List.of("alpha"));
 
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .skipPhases(holder::getApmPhaseList)
                     .map(phase -> phase.equals("beta") ? "fail" : "deployed")
                     .isSuccessCriteria(v -> v.equals("deployed"))
@@ -749,7 +702,8 @@ class PhaseTaskIteratorTest {
                     .execute();
 
             assertThat(results.get(0).isSkipped()).isTrue(); // alpha — holder skip
-            assertThat(results.get(1).status()).isEqualTo(PhaseTaskStatus.FAILED_BY_CRITERIA); // beta
+            assertThat(results.get(1).status())
+                    .isEqualTo(PhaseTaskStatus.FAILED_BY_CRITERIA); // beta
             assertThat(results.get(2).isSkipped()).isTrue(); // gamma — stopEarly
         }
 
@@ -758,8 +712,7 @@ class PhaseTaskIteratorTest {
             ApmConfigHolder holder = new ApmConfigHolder();
             holder.setApmPhaseList(List.of("beta"));
 
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .skipPhases(holder::getApmPhaseList)
                     .map(phase -> "deployed")
                     .executeParallel();
@@ -774,8 +727,7 @@ class PhaseTaskIteratorTest {
             ApmConfigHolder holder = new ApmConfigHolder();
             holder.setApmPhaseList(List.of("alpha"));
 
-            PhaseTaskOutput<String, String> skipped = PhaseTaskIterator
-                    .over(PHASES)
+            PhaseTaskOutput<String, String> skipped = PhaseTaskIterator.over(PHASES)
                     .skipPhases(holder::getApmPhaseList)
                     .map(phase -> "deployed")
                     .execute()
@@ -792,8 +744,8 @@ class PhaseTaskIteratorTest {
 
         @Test
         void acceptsNonStringKeyType() {
-            List<PhaseTaskOutput<Integer, String>> results = PhaseTaskIterator
-                    .over(List.of(1, 2, 3))
+            List<PhaseTaskOutput<Integer, String>> results = PhaseTaskIterator.over(
+                            List.of(1, 2, 3))
                     .map(n -> "step-" + n)
                     .execute();
 
@@ -810,8 +762,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void pipelinesOutput_fromPreviousStep() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .map(phase -> phase.length()) // String → Integer
                     .thenMap(n -> "len=" + n) // Integer → String
                     .execute();
@@ -823,8 +774,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void multipleSteps_chainedSequentially() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(List.of("only"))
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(List.of("only"))
                     .map(phase -> 1)
                     .thenMap(n -> n * 10)
                     .thenMap(n -> "result=" + n)
@@ -836,8 +786,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void exceptionInUpstreamMap_recordsFailedByException() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(List.of("only"))
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(List.of("only"))
                     .<Integer>map(phase -> {
                         throw new RuntimeException("map failed");
                     })
@@ -849,8 +798,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void exceptionInThenMap_recordsFailedByException() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(List.of("only"))
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(List.of("only"))
                     .map(phase -> 42)
                     .<String>thenMap(n -> {
                         throw new RuntimeException("then failed");
@@ -862,8 +810,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void isSuccessCriteria_appliesTo_finalOutput() {
-            List<PhaseTaskOutput<String, Integer>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, Integer>> results = PhaseTaskIterator.over(PHASES)
                     .map(String::toUpperCase)
                     .thenMap(String::length)
                     .isSuccessCriteria(n -> n > 3)
@@ -881,8 +828,7 @@ class PhaseTaskIteratorTest {
                 r.run();
             };
 
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(List.of("only"))
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(List.of("only"))
                     .map(phase -> "mapped")
                     .thenMap(v -> v + "-then", trackingExecutor)
                     .execute();
@@ -893,10 +839,8 @@ class PhaseTaskIteratorTest {
 
         @Test
         void throwsIllegalState_whenCalledBeforeMap() {
-            assertThatThrownBy(() -> PhaseTaskIterator
-                    .over(PHASES)
-                    .thenMap(v -> v)
-                    .execute())
+            assertThatThrownBy(
+                            () -> PhaseTaskIterator.over(PHASES).thenMap(v -> v).execute())
                     .isInstanceOf(IllegalStateException.class);
         }
     }
@@ -906,8 +850,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void composesAsyncContinuation() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(List.of("only"))
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(List.of("only"))
                     .map(phase -> "step1")
                     .thenMapAsync(v -> CompletableFuture.completedFuture(v + "-async"))
                     .execute();
@@ -918,8 +861,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void failedFuture_inContinuation_recordsFailedByException() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(List.of("only"))
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(List.of("only"))
                     .map(phase -> "step1")
                     .thenMapAsync(v -> CompletableFuture.<String>failedFuture(
                             new RuntimeException("async fail")))
@@ -930,8 +872,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void chainedAfterThenMap_composesCorrectly() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(List.of("only"))
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(List.of("only"))
                     .map(phase -> 1)
                     .thenMap(n -> n + "-sync")
                     .thenMapAsync(s -> CompletableFuture.completedFuture(s + "-async"))
@@ -948,8 +889,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void runsBothTasks_andCombinesResults() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .map(phase -> phase + "-A")
                     .andMap(phase -> phase + "-B", (a, b) -> a + "|" + b)
                     .execute();
@@ -961,8 +901,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void exceptionInPrimaryTask_recordsFailedByException() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(List.of("only"))
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(List.of("only"))
                     .<String>map(phase -> {
                         throw new RuntimeException("primary failed");
                     })
@@ -978,8 +917,7 @@ class PhaseTaskIteratorTest {
                 throw new RuntimeException("parallel failed");
             };
 
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(List.of("only"))
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(List.of("only"))
                     .map(phase -> "primary-ok")
                     .andMap(failingFn, (a, b) -> a + b)
                     .execute();
@@ -995,8 +933,7 @@ class PhaseTaskIteratorTest {
                 r.run();
             };
 
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(List.of("only"))
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(List.of("only"))
                     .map(phase -> "A")
                     .andMap(phase -> "B", trackingExecutor, (a, b) -> a + b)
                     .execute();
@@ -1007,8 +944,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void isSuccessCriteria_appliesTo_combinedResult() {
-            List<PhaseTaskOutput<String, Integer>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, Integer>> results = PhaseTaskIterator.over(PHASES)
                     .map(phase -> phase.length())
                     .andMap(phase -> 10, Integer::sum)
                     .isSuccessCriteria(n -> n > 10)
@@ -1020,10 +956,9 @@ class PhaseTaskIteratorTest {
 
         @Test
         void throwsIllegalState_whenCalledBeforeMap() {
-            assertThatThrownBy(() -> PhaseTaskIterator
-                    .over(PHASES)
-                    .andMap(phase -> "x", (a, b) -> b)
-                    .execute())
+            assertThatThrownBy(() -> PhaseTaskIterator.over(PHASES)
+                            .andMap(phase -> "x", (a, b) -> b)
+                            .execute())
                     .isInstanceOf(IllegalStateException.class);
         }
     }
@@ -1033,8 +968,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void combinesAsyncFutures() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .mapAsync(phase -> CompletableFuture.completedFuture(phase + "-async1"))
                     .andMapAsync(
                             phase -> CompletableFuture.completedFuture(phase + "-async2"),
@@ -1047,8 +981,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void failedParallelFuture_recordsFailedByException() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(List.of("only"))
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(List.of("only"))
                     .map(phase -> "primary")
                     .andMapAsync(
                             phase -> CompletableFuture.<String>failedFuture(
@@ -1061,8 +994,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void failedPrimaryFuture_recordsFailedByException() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(List.of("only"))
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(List.of("only"))
                     .mapAsync(phase -> CompletableFuture.<String>failedFuture(
                             new RuntimeException("primary failed")))
                     .andMapAsync(
@@ -1081,8 +1013,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void thenMap_afterAndMap_pipelinesTheCombinedResult() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(List.of("only"))
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(List.of("only"))
                     .map(phase -> "A")
                     .andMap(phase -> "B", (a, b) -> a + b) // → "AB"
                     .thenMap(String::toLowerCase) // → "ab"
@@ -1093,8 +1024,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void andMap_afterThenMap_addsParallelBranch_toTransformedResult() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(List.of("only"))
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(List.of("only"))
                     .map(phase -> "step1")
                     .thenMap(String::toUpperCase) // → "STEP1"
                     .andMap(phase -> "-extra", (a, b) -> a + b) // → "STEP1-extra"
@@ -1106,8 +1036,7 @@ class PhaseTaskIteratorTest {
         @Test
         void fullChain_sequential_and_parallel_withStopEarly() {
             // alpha(5) → "long",  beta(4) → "short" [fails],  gamma → skipped
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .map(phase -> phase.length()) // String → Integer
                     .thenMap(n -> n > 4 ? "long" : "short") // Integer → label
                     .andMap(
@@ -1118,17 +1047,18 @@ class PhaseTaskIteratorTest {
                     .execute();
 
             assertThat(results.get(0).isSucceeded()).isTrue(); // "long-a"
-            assertThat(results.get(1).status()).isEqualTo(PhaseTaskStatus.FAILED_BY_CRITERIA); // "short-b"
+            assertThat(results.get(1).status())
+                    .isEqualTo(PhaseTaskStatus.FAILED_BY_CRITERIA); // "short-b"
             assertThat(results.get(2).isSkipped()).isTrue(); // stopped early
         }
 
         @Test
         void thenMapAsync_afterAndMap_composesCorrectly() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(List.of("only"))
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(List.of("only"))
                     .map(phase -> "A")
                     .andMap(phase -> "B", (a, b) -> a + b) // → "AB"
-                    .thenMapAsync(s -> CompletableFuture.completedFuture(s + "-done")) // → "AB-done"
+                    .thenMapAsync(
+                            s -> CompletableFuture.completedFuture(s + "-done")) // → "AB-done"
                     .execute();
 
             assertThat(results.get(0).value()).contains("AB-done");
@@ -1137,8 +1067,7 @@ class PhaseTaskIteratorTest {
 
         @Test
         void exceptionMidChain_stopsAt_failedStep_remainingPhasesSkipped_withStopEarly() {
-            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator
-                    .over(PHASES)
+            List<PhaseTaskOutput<String, String>> results = PhaseTaskIterator.over(PHASES)
                     .map(phase -> "ok")
                     .thenMap(v -> {
                         if ("ok".equals(v)) throw new RuntimeException("fail mid-chain");
@@ -1148,8 +1077,9 @@ class PhaseTaskIteratorTest {
                     .stopEarly()
                     .execute();
 
-            assertThat(results).allMatch(r -> r.status() == PhaseTaskStatus.FAILED_BY_EXCEPTION
-                    || r.isSkipped());
+            assertThat(results)
+                    .allMatch(r ->
+                            r.status() == PhaseTaskStatus.FAILED_BY_EXCEPTION || r.isSkipped());
             assertThat(results.get(0).status()).isEqualTo(PhaseTaskStatus.FAILED_BY_EXCEPTION);
             assertThat(results.get(1).isSkipped()).isTrue();
             assertThat(results.get(2).isSkipped()).isTrue();

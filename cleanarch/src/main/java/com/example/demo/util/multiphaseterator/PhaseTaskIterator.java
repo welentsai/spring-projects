@@ -1,6 +1,7 @@
 package com.example.demo.util.multiphaseterator;
 
 import jakarta.annotation.Nullable;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -91,7 +92,8 @@ public final class PhaseTaskIterator<K, V> {
     public PhaseTaskIterator<K, V> skipPhases(List<K> toSkip) {
         Objects.requireNonNull(toSkip, "toSkip must not be null");
         Set<K> snapshot = Set.copyOf(toSkip);
-        return new PhaseTaskIterator<>(phases, () -> snapshot, taskMapper, successCriteria, earlyStop);
+        return new PhaseTaskIterator<>(
+                phases, () -> snapshot, taskMapper, successCriteria, earlyStop);
     }
 
     /**
@@ -100,10 +102,15 @@ public final class PhaseTaskIterator<K, V> {
      * rebuilding the iterator. Accepts any {@code Collection<? extends K>} supplier,
      * e.g. {@code apmConfigHolder::getApmPhaseList} when {@code K=String}.
      */
-    public PhaseTaskIterator<K, V> skipPhases(Supplier<? extends Collection<? extends K>> skipPhasesSupplier) {
+    public PhaseTaskIterator<K, V> skipPhases(
+            Supplier<? extends Collection<? extends K>> skipPhasesSupplier) {
         Objects.requireNonNull(skipPhasesSupplier, "skipPhasesSupplier must not be null");
         return new PhaseTaskIterator<>(
-                phases, () -> Set.copyOf(skipPhasesSupplier.get()), taskMapper, successCriteria, earlyStop);
+                phases,
+                () -> Set.copyOf(skipPhasesSupplier.get()),
+                taskMapper,
+                successCriteria,
+                earlyStop);
     }
 
     /**
@@ -177,7 +184,11 @@ public final class PhaseTaskIterator<K, V> {
         Objects.requireNonNull(fn, "fn must not be null");
         Function<K, CompletableFuture<V>> current = requireMapper();
         return new PhaseTaskIterator<>(
-                phases, skipPhases, phase -> current.apply(phase).thenApply(fn), v -> true, earlyStop);
+                phases,
+                skipPhases,
+                phase -> current.apply(phase).thenApply(fn),
+                v -> true,
+                earlyStop);
     }
 
     /**
@@ -209,7 +220,11 @@ public final class PhaseTaskIterator<K, V> {
         Objects.requireNonNull(fn, "fn must not be null");
         Function<K, CompletableFuture<V>> current = requireMapper();
         return new PhaseTaskIterator<>(
-                phases, skipPhases, phase -> current.apply(phase).thenCompose(fn), v -> true, earlyStop);
+                phases,
+                skipPhases,
+                phase -> current.apply(phase).thenCompose(fn),
+                v -> true,
+                earlyStop);
     }
 
     // ── Parallel composition (requires prior map / mapAsync) ─────────────────
@@ -229,7 +244,8 @@ public final class PhaseTaskIterator<K, V> {
      *
      * @throws IllegalStateException if called before {@link #map} or {@link #mapAsync}
      */
-    public <W, R> PhaseTaskIterator<K, R> andMap(Function<K, W> parallelFn, BiFunction<V, W, R> combiner) {
+    public <W, R> PhaseTaskIterator<K, R> andMap(
+            Function<K, W> parallelFn, BiFunction<V, W, R> combiner) {
         Objects.requireNonNull(parallelFn, "parallelFn must not be null");
         Objects.requireNonNull(combiner, "combiner must not be null");
         Function<K, CompletableFuture<V>> current = requireMapper();
@@ -237,7 +253,9 @@ public final class PhaseTaskIterator<K, V> {
                 phases,
                 skipPhases,
                 phase -> current.apply(phase)
-                        .thenCombine(CompletableFuture.supplyAsync(() -> parallelFn.apply(phase)), combiner),
+                        .thenCombine(
+                                CompletableFuture.supplyAsync(() -> parallelFn.apply(phase)),
+                                combiner),
                 v -> true,
                 earlyStop);
     }
@@ -258,7 +276,8 @@ public final class PhaseTaskIterator<K, V> {
                 skipPhases,
                 phase -> current.apply(phase)
                         .thenCombine(
-                                CompletableFuture.supplyAsync(() -> parallelFn.apply(phase), executor),
+                                CompletableFuture.supplyAsync(
+                                        () -> parallelFn.apply(phase), executor),
                                 combiner),
                 v -> true,
                 earlyStop);
@@ -338,7 +357,8 @@ public final class PhaseTaskIterator<K, V> {
                 results.add(PhaseTaskOutput.skipped(entry.phase()));
                 continue;
             }
-            PhaseTaskOutput<K, V> output = awaitFuture(entry.phase(), entry.future(), entry.startedAt());
+            PhaseTaskOutput<K, V> output =
+                    awaitFuture(entry.phase(), entry.future(), entry.startedAt());
             results.add(output);
             if (earlyStop && output.isFailed()) stopped = true;
         }
@@ -349,27 +369,32 @@ public final class PhaseTaskIterator<K, V> {
     // ── Internal helpers ──────────────────────────────────────────────────────
 
     private Function<K, CompletableFuture<V>> requireMapper() {
-        if (taskMapper == null) throw new IllegalStateException("call map() or mapAsync() before execute()");
+        if (taskMapper == null)
+            throw new IllegalStateException("call map() or mapAsync() before execute()");
         return taskMapper;
     }
 
-    private record PhaseEntry<K, V>(K phase, @Nullable CompletableFuture<V> future, Instant startedAt) {}
+    private record PhaseEntry<K, V>(
+            K phase, @Nullable CompletableFuture<V> future, Instant startedAt) {}
 
     private PhaseTaskOutput<K, V> runPhase(K phase, Function<K, CompletableFuture<V>> mapper) {
         Instant start = Instant.now();
         return awaitFuture(phase, mapper.apply(phase), start);
     }
 
-    private PhaseTaskOutput<K, V> awaitFuture(K phase, CompletableFuture<V> future, Instant startedAt) {
+    private PhaseTaskOutput<K, V> awaitFuture(
+            K phase, CompletableFuture<V> future, Instant startedAt) {
         try {
             V value = future.join();
             Duration duration = Duration.between(startedAt, Instant.now());
             boolean passed = successCriteria.test(value);
-            PhaseTaskStatus status = passed ? PhaseTaskStatus.SUCCEEDED : PhaseTaskStatus.FAILED_BY_CRITERIA;
+            PhaseTaskStatus status =
+                    passed ? PhaseTaskStatus.SUCCEEDED : PhaseTaskStatus.FAILED_BY_CRITERIA;
             return new PhaseTaskOutput<>(phase, status, value, duration);
         } catch (CompletionException e) {
             Duration duration = Duration.between(startedAt, Instant.now());
-            return new PhaseTaskOutput<>(phase, PhaseTaskStatus.FAILED_BY_EXCEPTION, null, duration);
+            return new PhaseTaskOutput<>(
+                    phase, PhaseTaskStatus.FAILED_BY_EXCEPTION, null, duration);
         }
     }
 }
