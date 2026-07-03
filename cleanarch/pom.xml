@@ -15,8 +15,24 @@
     <description>Demo project for Spring Boot</description>
     <properties>
         <java.version>17</java.version>
+        <spring-ai.version>1.1.8</spring-ai.version>
     </properties>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>${spring-ai.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <dependencies>
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-mcp-server-webmvc</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -65,12 +81,6 @@
                 <version>3.1.0</version>
                 <configuration>
                     <java>
-                        <!--                        <googleJavaFormat>-->
-                        <!--                            <version>1.33.0</version>-->
-                        <!--                            <style>AOSP</style>-->
-                        <!--                            <reflowLongStrings>true</reflowLongStrings>-->
-                        <!--                        </googleJavaFormat>-->
-                        <!-- Java formatting with AOSP style -->
                         <palantirJavaFormat>
                             <version>2.85.0</version>
                             <style>AOSP</style>                       <!-- or AOSP/GOOGLE (optional) -->

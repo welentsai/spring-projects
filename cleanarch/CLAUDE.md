@@ -35,6 +35,7 @@ This is a **Clean Architecture** (Hexagonal/Ports-and-Adapters) Spring Boot appl
 - **Databases:** H2 in-memory (dual datasource: `primarydb`, `secondarydb`)
 - **ORM:** Spring Data JPA (writes) + JdbcClient (reads)
 - **External services:** MinIO (video object storage)
+- **MCP server:** Spring AI 1.1.x (`spring-ai-starter-mcp-server-webmvc`) — Streamable HTTP at `/mcp`
 - **Resilience:** Resilience4j 2.3.0 (circuit breaker / rate limiter)
 - **Architecture tests:** ArchUnit 1.4.1
 - **Code format:** Spotless + Palantir Java Format (AOSP style)
@@ -45,7 +46,8 @@ This is a **Clean Architecture** (Hexagonal/Ports-and-Adapters) Spring Boot appl
 com.example.demo/
 ├── adapter/in/                   # REST controllers (inbound adapters) — no controller/ subfolder
 │   ├── dto/                      # Request/Response DTOs
-│   └── mapper/                   # Request → Input mappers
+│   ├── mapper/                   # Request → Input mappers
+│   └── mcp/                      # MCP tool adapters (@Tool methods calling use cases)
 ├── adapter/out/repository/       # JdbcClient query implementations (outbound adapters)
 ├── adapter/out/gateway/          # External service implementations (outbound adapters)
 ├── usecase/ports/in/             # Use case interfaces + Input/Result types
@@ -70,6 +72,15 @@ com.example.demo/
 |--------|------|------------|----------|
 | GET | `/api/v1/cities` | `CitiesController` | `FindCitiesUseCase` |
 | GET | `/api/v1/videos` | `VideoController` | `ListVideosUseCase` |
+
+### MCP Tools (Streamable HTTP at `/mcp`)
+
+| Tool | Adapter | Use Case |
+|------|---------|----------|
+| `find_cities` | `CitiesToolAdapter` | `FindCitiesUseCase` |
+| `list_videos` | `VideoToolAdapter` | `ListVideosUseCase` |
+
+The MCP server (Spring AI) is a second inbound adapter: tool adapters in `adapter.in.mcp` reuse the same Request-DTO `validate()` → mapper → use case chain as controllers, and are wired (with the `ToolCallbackProvider`) in `framework/config/McpConfig`. Server settings live under `spring.ai.mcp.server.*` in `application.properties`. Register locally with `claude mcp add --transport http cleanarch http://localhost:8080/mcp`.
 
 ### Dependency Flow
 
@@ -111,6 +122,7 @@ new XxxRequest(...)
 | Layer | Suffix | Location |
 |-------|--------|----------|
 | REST controllers | `Controller` | `adapter.in` |
+| MCP tool adapters | `ToolAdapter` | `adapter.in.mcp` |
 | Use case interfaces | `UseCase` | `usecase.ports.in` |
 | Use case implementations | `UseCaseImpl` | `usecase.ports.in.impl` |
 | Repository interfaces | `Repository` | `usecase.ports.out.repository` |

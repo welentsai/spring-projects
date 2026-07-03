@@ -4,6 +4,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
+import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.*;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.lang.ArchCondition;
@@ -57,6 +58,65 @@ public class ArchunitRuleTest {
     }
 
     @Test
+    public void mcp_tool_adapters_should_have_tool_adapter_suffix() {
+        ArchRule rule = classes()
+                .that()
+                .resideInAPackage("..adapter.in.mcp..")
+                .and()
+                .haveSimpleNameNotEndingWith("Test")
+                .should()
+                .haveSimpleNameEndingWith("ToolAdapter")
+                .because(
+                        "MCP inbound adapters must follow the {Domain}ToolAdapter naming convention");
+
+        rule.check(ALL_CLASSES);
+    }
+
+    @Test
+    public void mcp_tool_adapters_should_only_depend_on_inbound_ports() {
+        ArchRule rule = noClasses()
+                .that()
+                .resideInAPackage("..adapter.in.mcp..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAnyPackage(
+                        "..adapter.out..",
+                        "..usecase.ports.out..",
+                        "..usecase.ports.in.impl..",
+                        "..framework..",
+                        "..domain..")
+                .because("MCP tool adapters may only depend on use case interfaces (ports/in),"
+                        + " never on outbound ports, implementations, framework or domain classes");
+
+        rule.check(ALL_CLASSES);
+    }
+
+    @Test
+    public void controllers_and_mcp_tool_adapters_should_not_depend_on_each_other() {
+        // Match only project classes as dependency targets — a bare simple-name match would
+        // also hit framework annotation classes like org.springframework...RestController.
+        DescribedPredicate<JavaClass> projectInboundAdapters =
+                JavaClass.Predicates.resideInAPackage("com.example..")
+                        .and(JavaClass.Predicates.simpleNameEndingWith("Controller")
+                                .or(JavaClass.Predicates.simpleNameEndingWith("ToolAdapter")));
+
+        ArchRule rule = noClasses()
+                .that()
+                .resideInAPackage("..adapter.in..")
+                .and()
+                .haveSimpleNameEndingWith("Controller")
+                .or()
+                .resideInAPackage("..adapter.in..")
+                .and()
+                .haveSimpleNameEndingWith("ToolAdapter")
+                .should()
+                .dependOnClassesThat(projectInboundAdapters)
+                .because("inbound adapters must stay independent of each other");
+
+        rule.check(ALL_CLASSES);
+    }
+
+    @Test
     public void methods_should_be_camel_case() {
         ArchRule rule = methods()
                 .that()
@@ -76,7 +136,8 @@ public class ArchunitRuleTest {
         rule.check(ALL_CLASSES);
     }
 
-    // This test case will cause false alarm for the class that contains action gateway but not used in PhaseIterator
+    // This test case will cause false alarm for the class that contains action gateway but not used
+    // in PhaseIterator
     @Test
     public void multiphaseterator_should_not_be_used_with_gateways_in_usecase() {
         ArchRule rule = classes()

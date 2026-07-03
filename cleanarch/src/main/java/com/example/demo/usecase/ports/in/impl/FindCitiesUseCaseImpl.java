@@ -42,9 +42,9 @@ public class FindCitiesUseCaseImpl implements FindCitiesUseCase {
             logger.info("Inline routing output is {}", output);
             putLogGateway.execute(new PutLogInput("Inline routing output is", output));
 
-//            PhaseTaskIterator.over(List.of("a"))
-//                    .map(p -> getInlineRoutingOutputIs(output))
-//                    .execute();
+            //            PhaseTaskIterator.over(List.of("a"))
+            //                    .map(p -> getInlineRoutingOutputIs(output))
+            //                    .execute();
 
             // 在執行資料庫操作前，設定當前執行緒的資料來源
             if (output.datasourceKey().equalsIgnoreCase("PRIMARY")) {
@@ -61,14 +61,12 @@ public class FindCitiesUseCaseImpl implements FindCitiesUseCase {
                     ? DataSourceKey.PRIMARY
                     : DataSourceKey.SECONDARY;
 
-//            PhaseTaskIterator.over(List.of("a"))
-//                    .map(p -> putLogGateway.execute(
-//                            new PutLogInput("Inline routing output is", output)))
-//                    .execute();
+            //            PhaseTaskIterator.over(List.of("a"))
+            //                    .map(p -> putLogGateway.execute(
+            //                            new PutLogInput("Inline routing output is", output)))
+            //                    .execute();
 
-            PhaseTaskIterator.over(List.of("a"))
-                    .map(p -> p + "a")
-                    .execute();
+            PhaseTaskIterator.over(List.of("a")).map(p -> p + "a").execute();
 
             DataSourceContextHolder.setDataSourceKey(dataSourceKey);
             logger.info("Set data source context to: {}", dataSourceKey);
