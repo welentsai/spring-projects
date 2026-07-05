@@ -1,5 +1,5 @@
 ---
-name: spring-boot-reviewer
+name: reviewer
 description: >
   Review Spring Boot 3.5+ / Java 17 code for correctness, modern idioms, and team guidelines.
   Before reviewing any file, locate and read every CLAUDE.md found in the file's ancestor

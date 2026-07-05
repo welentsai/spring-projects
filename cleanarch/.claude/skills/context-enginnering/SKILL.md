@@ -496,6 +496,7 @@ add new code and needs a template, load the relevant pattern file and walk them 
 | Layer / Component | Pattern File |
 |-------------------|-------------|
 | REST Controller + Request/Response DTOs + Mapper | `references/patterns/controller.md` |
+| MCP Tool Adapter (@Tool) + McpConfig wiring | `references/patterns/mcp-tool-adapter.md` |
 | Use Case interface + Input + Result + DTO | `references/patterns/usecase-interface.md` |
 | Use Case implementation | `references/patterns/usecase-impl.md` |
 | Gateway interface + Input + Output records | `references/patterns/gateway-interface.md` |
@@ -515,7 +516,7 @@ file to check allowed/forbidden imports and constraints before writing or sugges
 
 | Package | Module Rules File |
 |---------|------------------|
-| `adapter.in` (controllers, DTOs, mappers) | `references/modules/adapter-in.md` |
+| `adapter.in` (controllers, DTOs, mappers, MCP tool adapters) | `references/modules/adapter-in.md` |
 | `adapter.out.gateway` | `references/modules/adapter-out-gateway.md` |
 | `adapter.out.repository` | `references/modules/adapter-out-repository.md` |
 | `usecase.ports.in` + `usecase.ports.in.impl` | `references/modules/usecase-ports-in.md` |
@@ -528,7 +529,7 @@ file to check allowed/forbidden imports and constraints before writing or sugges
 ## Reference Files
 
 See `references/` for additional detail:
-- `references/conventions.md` — Naming conventions and patterns (populated after first scan)
+- `references/conventions.md` — Naming conventions and patterns (populated from codebase scan)
 - `references/layer-rules.md` — Detailed dependency rules and violation examples
 - `references/patterns/` — Per-component canonical code patterns extracted from actual codebase
 - `references/modules/` — Per-package rules: allowed/forbidden imports, constraints, checklists

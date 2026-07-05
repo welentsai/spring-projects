@@ -37,7 +37,8 @@ This is a **Clean Architecture** (Hexagonal/Ports-and-Adapters) Spring Boot appl
 - **External services:** MinIO (video object storage)
 - **MCP server:** Spring AI 1.1.x (`spring-ai-starter-mcp-server-webmvc`) — Streamable HTTP at `/mcp`
 - **Resilience:** Resilience4j 2.3.0 (circuit breaker / rate limiter)
-- **Architecture tests:** ArchUnit 1.4.1
+- **Observability:** Spring Boot Actuator
+- **Architecture tests:** ArchUnit 1.4.2
 - **Code format:** Spotless + Palantir Java Format (AOSP style)
 
 ### Layer Structure
@@ -57,9 +58,11 @@ com.example.demo/
 ├── usecase/ports/out/gateway/    # Gateway port interfaces + Input/Output types
 ├── usecase/ports/out/entity/     # JPA entities
 ├── domain/model/                 # Pure Java domain objects (records, no Spring deps)
-├── framework/di/                 # Spring @Configuration classes and bean wiring
-│   ├── config/                   # AppConfig, VideoConfig
-│   └── dynamicdatasource/        # AbstractRoutingDataSource for dual-DB routing
+├── framework/                    # Spring-specific glue
+│   ├── DemoGlobalExceptionHandler # Global @RestControllerAdvice
+│   ├── config/                   # AppConfig, McpConfig, VideoConfig
+│   └── di/                       # BeanInjection — composition root (bean wiring)
+│       └── dynamicdatasource/    # AbstractRoutingDataSource for dual-DB routing
 ├── exception/                    # BadRequestException, UserNotFoundException
 ├── util/
 │   └── multiphaseterator/        # PhaseTaskIterator — fluent async task runner over phase lists
@@ -117,6 +120,10 @@ new XxxRequest(...)
 
 **PhaseTaskIterator (`util.multiphaseterator`):** Fluent builder for running an async task over a list of named phases and collecting typed `PhaseTaskOutput<K,V>` results. Supports sequential (`execute()`) and parallel fan-out (`executeParallel()`), phase skipping (`skipPhases()`), early-stop on failure (`stopEarly()`), sequential composition (`thenMap`, `thenMapAsync`), and parallel composition (`andMap`, `andMapAsync`). Used for multi-environment deployment pipelines or any N-phase async workflow. `Try<T>` (sealed interface) and `ApmConfigHolder` are companion utilities in the same package.
 
+ArchUnit guardrails on this utility (`ArchunitRuleTest`):
+- Only `framework` and `usecase` may depend on `util.multiphaseterator`
+- In use cases, lambdas passed to `PhaseTaskIterator` map methods (`thenMap`, `andMap`, async variants) may only call read-style gateways (names starting with `Inquire`/`Get`) — action gateways must not be invoked inside those lambdas, neither directly nor via private helper methods
+
 ## Naming Conventions (enforced by ArchUnit tests)
 
 | Layer | Suffix | Location |
@@ -136,10 +143,13 @@ new XxxRequest(...)
 - **Domain layer** (`domain.model`): zero Spring framework imports
 - **Application layer** (`usecase`): no `@Service`, `@Component`, `@Repository` annotations
 - **Controllers**: no controller-to-controller dependencies
+- **MCP tool adapters** (`adapter.in.mcp`): may only depend on use case interfaces (`usecase.ports.in`) plus `adapter.in` DTOs/mappers — never on `adapter.out`, `usecase.ports.out`, `usecase.ports.in.impl`, `framework`, or `domain`
+- **Inbound adapters stay independent**: controllers and tool adapters must not depend on each other
 
 ## Testing Conventions
 
 - Controllers: `@WebMvcTest` + `@MockitoBean` for dependencies
+- MCP tool adapters: plain unit tests with mocked use cases (`CitiesToolAdapterTest`, `VideoToolAdapterTest`); `McpConfigTest` covers tool registration
 - Use cases: `@ExtendWith(MockitoExtension.class)` + `@Mock`/`@InjectMocks`
 - Architecture rules: `ArchunitRuleTest` validates naming and layer constraints — run this after any structural changes
 - Integration: `DynamicDataSourceIntegrationTest` verifies datasource routing end-to-end
