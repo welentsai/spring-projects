@@ -44,9 +44,9 @@ Hard limits and gates:
 
 1. **Iteration cap: 3 review cycles** (unless the user sets a different number).
    If blockers remain after the cap, stop and report honestly: list what's still
-   failing, why the loop couldn't converge, and recommend `impact-survey` if the
-   remaining problems are structural rather than fixable-in-place. Never silently
-   downgrade a blocker to "good enough" just to exit.
+   failing, why the loop couldn't converge, and recommend a separate design-change
+   pass with `code-refactor` if the remaining problems are structural rather than
+   fixable-in-place. Never silently downgrade a blocker to "good enough" just to exit.
 2. **Convergence condition is the verdict, not vibes.** Only `REQUEST CHANGES`
    continues the loop. `APPROVE WITH SUGGESTIONS` terminates it — suggestions are the
    author's call by definition; chasing them makes the loop non-convergent. Surface
@@ -120,7 +120,7 @@ Final verdict: <APPROVE | APPROVE WITH SUGGESTIONS | REQUEST CHANGES (capped)>
  
 ### Open items
 <Unapplied design changes, review suggestions from the final APPROVE-WITH-SUGGESTIONS,
- anything deferred to impact-survey / a follow-up.>
+ anything deferred to a follow-up.>
 ```
 
 ## A note on restraint

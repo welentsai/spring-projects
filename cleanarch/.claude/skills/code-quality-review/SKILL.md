@@ -8,7 +8,7 @@ description: >
   "review this PR", "幫我 review 這個 PR / diff", "這個 changeset 可以 merge 嗎",
   "code quality review", or "stop the slop". This is a REVIEW skill (approve/block
   judgment on changes) — for rewriting existing code on request, use `code-refactor`
-  instead; for estimating the blast radius of a requirement change, use `impact-survey`.
+  instead.
 ---
 
 # Code Quality Review
@@ -79,8 +79,8 @@ Typical judo moves in this codebase:
   generalization the original needed; both call sites converge.
   Propose judo when the simplification is clearly reachable and behavior-preserving.
   For anything bigger — restructuring that changes shape or spans many files — do **not**
-  demand it in review. Flag it as a follow-up and point the user at `impact-survey` (to
-  size it) and `code-refactor` (to execute it). Review is a gate, not a rewrite.
+  demand it in review. Flag it as a follow-up and point the user at `code-refactor` (it
+  will survey and size the change before executing). Review is a gate, not a rewrite.
 
 ## What NOT to flag
 
@@ -122,7 +122,7 @@ APPROVE | APPROVE WITH SUGGESTIONS | REQUEST CHANGES
 1. **<short title>** — `<file>` — <one or two lines each; keep this section short>
  
 ### Follow-ups (out of scope for this PR)
-- <bigger restructures worth doing later — note if impact-survey / code-refactor should pick them up>
+- <bigger restructures worth doing later — note if code-refactor should pick them up>
 ```
 
 Tone in findings: direct and specific. Say "this duplicates `PageMapper.toResponse`;

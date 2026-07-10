@@ -53,7 +53,7 @@ The core refactoring move is therefore almost always one of:
 ## What this skill looks for
 
 Findings come from four lenses. The first three are the simplicity principles; the fourth
-is modern-Java/Spring hygiene. Read the reference files for the full catalogs with Java
+is modern-Java/Spring hygiene. Read the reference file for the full catalog with Java
 examples — don't try to hold every rule in your head:
 
 - **Actions / Calculations / Data separation** — calculations trapped in actions, actions
@@ -65,7 +65,7 @@ examples — don't try to hold every rule in your head:
   abstraction is as much a problem as too little). → `references/grokking-simplicity.md`
 - **Java 17 + Spring Boot 3.5.x idioms** — records, sealed types, pattern matching, switch
   expressions, constructor injection, `@ConfigurationProperties`, `RestClient`, Problem
-  Details, the `jakarta.*` namespace, and so on. → `references/java17-springboot35.md`
+  Details, the `jakarta.*` namespace, and so on.
   A good refactor usually touches several lenses at once: converting a mutable entity to a
   record (immutability + Java idiom) often also removes the setters that were the only reason
   a calculation had been written as a mutating action (A/C/D).
@@ -79,7 +79,7 @@ examples — don't try to hold every rule in your head:
 2. **Classify the code.** For each meaningful unit, label it Action, Calculation, or Data,
    and note which layer it currently lives in versus where it belongs. Mismatches are your
    richest source of findings.
-3. **Run the four lenses** over the target, consulting the reference files as needed.
+3. **Run the four lenses** over the target, consulting the reference file as needed.
 4. **Write the report** using the structure below. Crucially, split findings into two
    buckets so the user can approve them separately:
     - **Safe refactors** — behavior-preserving. The kind you could apply with confidence
