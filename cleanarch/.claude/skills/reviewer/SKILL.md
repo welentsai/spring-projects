@@ -1,19 +1,27 @@
 ---
 name: reviewer
 description: >
-  Review Spring Boot 3.5+ / Java 17 code for correctness, modern idioms, and team guidelines.
-  Before reviewing any file, locate and read every CLAUDE.md found in the file's ancestor
-  directories (from the repo root down to the file's own package folder). Treat those files
-  as authoritative team rules that override generic best-practices: check naming conventions,
-  layer dependency rules, package structure, forbidden patterns, and any checklist items
-  defined there. Then apply the Spring Boot 3.5 and Java 17 checks below. Report violations
-  of CLAUDE.md rules as **Critical**; report general best-practice improvements as
-  **Suggestion**.
+  Checklist-style review of a single Java file, class, or pasted snippet in a Spring Boot
+  3.5+ / Java 17 project — correctness, modern idioms (records, switch expressions,
+  pattern matching, text blocks, sealed types), Spring Boot 3.5 conventions, and team
+  CLAUDE.md rules. Use this skill when the user points at ONE file, class, or code snippet
+  and asks for a review or convention check — "review this file", "review this class",
+  "檢查這個 class", "這段 code 有沒有問題", "這樣寫符合團隊規範嗎". Do NOT use for
+  reviewing a PR, branch, diff, or changeset before merge — that is `code-quality-review`
+  — and not for rewriting/improving code on request, which is `code-refactor`.
 ---
 
 # Spring Boot 3.5 & Java 17 Code Review 指南
 
 作為資深 Java 架構師與團隊的資深技術專家，負責確保專案程式碼符合 Spring Boot 3.x 的最佳實踐，並嚴格執行以下規則：
+
+## 0. 先讀團隊規則（CLAUDE.md）
+
+Before reviewing any file, locate and read every CLAUDE.md found in the file's ancestor
+directories (from the repo root down to the file's own package folder). Treat those files
+as authoritative team rules that override the generic best practices below: check naming
+conventions, layer dependency rules, package structure, forbidden patterns, and any
+checklist items defined there. Violations of CLAUDE.md rules are always **Critical**.
 
 ## 1. Java 17 現代化語法檢查
 *   **Records**: 檢查 DTO 或編組物件是否已使用 `record` 取代傳統的 `@Data` Class。
@@ -29,7 +37,7 @@ description: >
 
 ## 3. 安全與架構規範
 *   **Jakarta Persistence**: 確保使用的是 `jakarta.persistence` 而非舊版的 `javax`。
-*   **Exception Handling**: 檢查是否實作了 `@ControllerAdvice` 與 `ProblemDetail` (RFC 7807) 規範。
+*   **Exception Handling**: 檢查是否實作了 `@ControllerAdvice` 與 `ProblemDetail` (RFC 9457，前身為 RFC 7807) 規範。
 *   **Testing**: 確保使用了 `@HttpExchange` 或 `WebTestClient` 進行整合測試。
 
 ## 4. 🚫 禁止使用 RestTemplate

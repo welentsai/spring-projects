@@ -8,7 +8,8 @@ description: >
   "review this PR", "幫我 review 這個 PR / diff", "這個 changeset 可以 merge 嗎",
   "code quality review", or "stop the slop". This is a REVIEW skill (approve/block
   judgment on changes) — for rewriting existing code on request, use `code-refactor`
-  instead.
+  instead; for a checklist-style idiom review of a single file or class rather than a
+  diff/changeset, use `reviewer`.
 ---
 
 # Code Quality Review
@@ -27,6 +28,7 @@ Two rules of engagement before anything else:
 2. **Report little, but report it hard.** A handful of high-confidence structural
    findings beats thirty nits. Never bury a blocker under formatting comments. If a
    finding is style-only and no real issue exists, don't write it.
+
 ## The bar: presumptive blockers
 
 Each of the following is a **blocker by default** — the author must either fix it or
@@ -65,6 +67,7 @@ justifications.
 8. **New mutable shared state.** Mutable statics, singleton beans holding per-request
    state, setters added to something that was (or should be) a value/record, collections
    returned by reference from domain objects without defensive copies.
+
 ## What to actively look for: code judo
 
 Don't only ask "is this change clean?" — ask **"is there a nearby move that makes this
@@ -77,10 +80,11 @@ Typical judo moves in this codebase:
   calculation to `domain` and leaving the action thin; the new tests become trivial.
 - The diff copies a mapper because the original didn't quite fit → propose the one
   generalization the original needed; both call sites converge.
-  Propose judo when the simplification is clearly reachable and behavior-preserving.
-  For anything bigger — restructuring that changes shape or spans many files — do **not**
-  demand it in review. Flag it as a follow-up and point the user at `code-refactor` (it
-  will survey and size the change before executing). Review is a gate, not a rewrite.
+
+Propose judo when the simplification is clearly reachable and behavior-preserving.
+For anything bigger — restructuring that changes shape or spans many files — do **not**
+demand it in review. Flag it as a follow-up and point the user at `code-refactor` (it
+will survey and size the change before executing). Review is a gate, not a rewrite.
 
 ## What NOT to flag
 
@@ -91,6 +95,7 @@ Typical judo moves in this codebase:
 - Hypothetical flexibility ("what if we someday need…"). YAGNI applies to reviewers.
 - Anything you are not confident about after reading the surrounding code. Low-confidence
   hunches go in a single "worth a look" line at most, or nowhere.
+
 ## Procedure
 
 1. **Establish the diff.** Ask for / locate the branch, PR, or pasted diff. Identify
@@ -99,10 +104,14 @@ Typical judo moves in this codebase:
 2. **Layer map.** For each touched unit, note its layer and whether it is Data /
    Calculation / Action. Mismatches feed blockers #1–#2.
 3. **Run the blocker list**, then the judo pass, then (sparingly) suggestions.
-4. **Write the verdict** using the report structure below. Every blocker names the
-   file/line, the rule it trips, and the concrete fix — not just the complaint.
+4. **Write the verdict** using the report structure below. The verdict is mechanical,
+   not a mood: any unresolved blocker → `REQUEST CHANGES`; no blockers but suggestions
+   → `APPROVE WITH SUGGESTIONS`; neither → `APPROVE`. Never list a blocker under a
+   passing verdict. Every blocker names the file/line, the rule it trips, and the
+   concrete fix — not just the complaint.
 5. **Stop.** Don't start rewriting code. If the user wants the fixes applied, hand off
    to `code-refactor` (it will re-survey and apply changes with approval).
+
 ## Report structure
 
 ```

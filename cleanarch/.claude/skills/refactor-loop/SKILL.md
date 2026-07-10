@@ -61,9 +61,14 @@ Hard limits and gates:
    running tests after changes; the loop makes it a gate. If the project's tests
    cannot be run in this environment, say so explicitly at loop start, tell the user
    exactly what to run, and treat "user confirms tests pass" as the gate instead.
-5. **Track the baseline.** At loop start, record the starting point (branch, commit,
-   or a copy of the original files) so the final summary can show a true
-   before/after and so any iteration can be reverted cleanly.
+5. **Track the baseline and per-iteration markers.** At loop start, record the
+   starting point (branch + `git rev-parse HEAD`, and whether the tree was dirty).
+   At the end of each iteration, snapshot the state (a commit if the user allows
+   committing; otherwise `git stash create`, which records a commit object without
+   touching the working tree). "This iteration's diff" in step ⑤ means the diff
+   against the *previous iteration's* snapshot, not against the loop baseline; the
+   baseline serves the final before/after summary and clean reverts.
+
 ## Approval rules — what may be automated, what may not
 
 The loop automates **execution and verification**, never **architectural judgment**:
@@ -79,8 +84,9 @@ The loop automates **execution and verification**, never **architectural judgmen
 - **Blocker fixes in later iterations**: fixes that are behavior-preserving and match
   the review's prescribed "Fix:" line fall under the safe-refactor pre-authorization.
   Anything that changes shape is a design change — pause and ask.
-  If the user has not pre-authorized anything, run every iteration's step ② as a normal
-  interactive approval, exactly as `code-refactor` Phase 1 prescribes.
+
+If the user has not pre-authorized anything, run every iteration's step ② as a normal
+interactive approval, exactly as `code-refactor` Phase 1 prescribes.
 
 ## Role separation inside one session
 
@@ -96,6 +102,7 @@ its own work. Counteract this deliberately:
 - It is a legitimate and expected outcome for the reviewer to block the refactorer's
   work. A loop that always passes on iteration 1 is a sign the review phase is being
   performed too gently.
+
 ## Final summary
 
 When the loop exits (converged or capped), report:

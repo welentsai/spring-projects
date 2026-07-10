@@ -45,10 +45,11 @@ The core refactoring move is therefore almost always one of:
    a static field, the clock, or a hidden dependency has implicit inputs; one that mutates
    them has implicit outputs. Turn them into parameters and return values. This is what
    converts an action into a calculation, or at least tames it.
-   The hexagonal **dependency rule** (`domain ← usecase ← adapter`, no reverse arrows) is the
-   enforcement mechanism for this separation. If `domain` imports anything from Spring or
-   from an outer layer, that is both an architecture violation *and* a sign that a calculation
-   has been contaminated with an action. The two problems are the same problem.
+
+The hexagonal **dependency rule** (`domain ← usecase ← adapter`, no reverse arrows) is the
+enforcement mechanism for this separation. If `domain` imports anything from Spring or
+from an outer layer, that is both an architecture violation *and* a sign that a calculation
+has been contaminated with an action. The two problems are the same problem.
 
 ## What this skill looks for
 
@@ -66,9 +67,10 @@ examples — don't try to hold every rule in your head:
 - **Java 17 + Spring Boot 3.5.x idioms** — records, sealed types, pattern matching, switch
   expressions, constructor injection, `@ConfigurationProperties`, `RestClient`, Problem
   Details, the `jakarta.*` namespace, and so on.
-  A good refactor usually touches several lenses at once: converting a mutable entity to a
-  record (immutability + Java idiom) often also removes the setters that were the only reason
-  a calculation had been written as a mutating action (A/C/D).
+
+A good refactor usually touches several lenses at once: converting a mutable entity to a
+record (immutability + Java idiom) often also removes the setters that were the only reason
+a calculation had been written as a mutating action (A/C/D).
 
 ## Phase 1 — Survey and report
 
@@ -88,7 +90,11 @@ examples — don't try to hold every rule in your head:
     - **Design changes** — structural changes that alter shape or require judgment: moving
       logic across layers, splitting a class, introducing a port, collapsing an abstraction.
       These carry more risk and reward, so the user should opt in deliberately.
-5. **Stop and ask** which items to apply. Do not proceed to Phase 2 unprompted.
+5. **Stop and ask** which items to apply. Do not proceed to Phase 2 unprompted. The one
+   exception: when an orchestrating skill (e.g. `refactor-loop`) holds a pre-authorization
+   the user granted explicitly, that authorization counts as approval for the items it
+   covers — design changes still require a fresh ask every time.
+
 ### Report structure
 
 Use this layout. Keep each finding tight — location, the problem, *why it matters*, and the
@@ -139,6 +145,7 @@ Once the user has chosen items:
    run here, say so and tell the user exactly what to run.
 5. **Report what changed.** Summarize the applied edits and show diffs or before/after for
    anything non-trivial, so the user can review without re-reading the whole file.
+
 ## A note on restraint
 
 This skill exists to *remove* complexity, so hold yourself to the same standard you apply
